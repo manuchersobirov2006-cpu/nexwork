@@ -3,6 +3,7 @@ import { useAuth } from '../lib/auth';
 import { useTheme } from '../lib/theme';
 import { LANGUAGES, getAvatarUrl } from '../lib/constants';
 import { Avatar, Badge, Toggle, Spinner } from '../components/ui';
+import { t } from '../lib/i18n';
 import type { Language } from '../lib/i18n';
 import {
   User, Bell, Shield, Crown,
@@ -14,6 +15,7 @@ type Tab = 'profile' | 'notifications' | 'appearance' | 'security' | 'billing';
 export function SettingsScreen() {
   const { profile, updateProfile, signOut } = useAuth();
   const { theme, toggleTheme, language, setLanguage } = useTheme();
+  void language;
   const [tab, setTab] = useState<Tab>('profile');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -45,31 +47,31 @@ export function SettingsScreen() {
   };
 
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
-    { key: 'profile', label: 'Профиль', icon: User },
-    { key: 'notifications', label: 'Уведомления', icon: Bell },
-    { key: 'appearance', label: 'Внешний вид', icon: Sun },
-    { key: 'security', label: 'Безопасность', icon: Shield },
-    { key: 'billing', label: 'Биллинг', icon: DollarSign },
+    { key: 'profile', label: t('settings.tab.profile'), icon: User },
+    { key: 'notifications', label: t('settings.tab.notifications'), icon: Bell },
+    { key: 'appearance', label: t('settings.tab.appearance'), icon: Sun },
+    { key: 'security', label: t('settings.tab.security'), icon: Shield },
+    { key: 'billing', label: t('settings.tab.billing'), icon: DollarSign },
   ];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Настройки</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Управляйте аккаунтом и предпочтениями</p>
+        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">{t('settings.title')}</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">{t('settings.subtitle')}</p>
       </div>
 
       <div className="grid lg:grid-cols-[200px_1fr] gap-6">
         {/* Tabs sidebar */}
         <div className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible">
-          {tabs.map(t => (
+          {tabs.map(tabItem => (
             <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`nav-link whitespace-nowrap ${tab === t.key ? 'nav-link-active' : ''}`}
+              key={tabItem.key}
+              onClick={() => setTab(tabItem.key)}
+              className={`nav-link whitespace-nowrap ${tab === tabItem.key ? 'nav-link-active' : ''}`}
             >
-              <t.icon className="w-5 h-5 shrink-0" />
-              <span>{t.label}</span>
+              <tabItem.icon className="w-5 h-5 shrink-0" />
+              <span>{tabItem.label}</span>
             </button>
           ))}
         </div>
@@ -90,40 +92,40 @@ export function SettingsScreen() {
                   <div className="text-sm text-slate-500">{profile.email}</div>
                   <div className="flex gap-1 mt-1">
                     <Badge color={profile.role === 'employer' ? 'purple' : 'blue'}>
-                      {profile.role === 'employer' ? 'Заказчик' : 'Фрилансер'}
+                      {profile.role === 'employer' ? t('role.employer') : t('role.freelancer')}
                     </Badge>
-                    {profile.is_premium && <Badge color="amber"><Crown className="w-3 h-3" /> Premium</Badge>}
+                    {profile.is_premium && <Badge color="amber"><Crown className="w-3 h-3" /> {t('passport.premium')}</Badge>}
                   </div>
                 </div>
               </div>
 
-              <div><label className="label">Отображаемое имя</label><input type="text" value={formData.display_name} onChange={e => setFormData({ ...formData, display_name: e.target.value })} className="input" /></div>
-              <div><label className="label">Полное имя</label><input type="text" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} className="input" /></div>
-              <div><label className="label">О себе</label><textarea value={formData.bio} onChange={e => setFormData({ ...formData, bio: e.target.value })} rows={3} className="input" /></div>
+              <div><label className="label">{t('settings.displayName')}</label><input type="text" value={formData.display_name} onChange={e => setFormData({ ...formData, display_name: e.target.value })} className="input" /></div>
+              <div><label className="label">{t('settings.fullName')}</label><input type="text" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} className="input" /></div>
+              <div><label className="label">{t('settings.about')}</label><textarea value={formData.bio} onChange={e => setFormData({ ...formData, bio: e.target.value })} rows={3} className="input" /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="label">Локация</label><input type="text" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} className="input" /></div>
-                <div><label className="label">Телефон</label><input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="input" /></div>
+                <div><label className="label">{t('settings.location')}</label><input type="text" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} className="input" /></div>
+                <div><label className="label">{t('settings.phone')}</label><input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="input" /></div>
               </div>
-              <div><label className="label">URL аватара</label><input type="text" value={formData.avatar_url} onChange={e => setFormData({ ...formData, avatar_url: e.target.value })} placeholder="https://..." className="input" /></div>
+              <div><label className="label">{t('settings.avatarUrl')}</label><input type="text" value={formData.avatar_url} onChange={e => setFormData({ ...formData, avatar_url: e.target.value })} placeholder="https://..." className="input" /></div>
 
               <div className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <button onClick={handleSave} disabled={saving} className="btn-primary">
                   {saving ? <Spinner className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                  Сохранить
+                  {t('settings.save')}
                 </button>
-                {saved && <span className="text-sm text-success-600 animate-fade-in">Сохранено!</span>}
+                {saved && <span className="text-sm text-success-600 animate-fade-in">{t('settings.saved')}</span>}
               </div>
             </div>
           )}
 
           {tab === 'notifications' && (
             <div className="space-y-4 animate-fade-in">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-2">Уведомления</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white mb-2">{t('settings.notif.title')}</h3>
               {[
-                { key: 'orders' as const, label: 'Заказы', description: 'Новые заказы и изменения статуса' },
-                { key: 'messages' as const, label: 'Сообщения', description: 'Новые сообщения в чатах' },
-                { key: 'bids' as const, label: 'Заявки на тендеры', description: 'Ответы на ваши заявки' },
-                { key: 'marketing' as const, label: 'Маркетинг', description: 'Новости и специальные предложения' },
+                { key: 'orders' as const, label: t('settings.notif.orders'), description: t('settings.notif.orders.desc') },
+                { key: 'messages' as const, label: t('settings.notif.messages'), description: t('settings.notif.messages.desc') },
+                { key: 'bids' as const, label: t('settings.notif.bids'), description: t('settings.notif.bids.desc') },
+                { key: 'marketing' as const, label: t('settings.notif.marketing'), description: t('settings.notif.marketing.desc') },
               ].map(item => (
                 <div key={item.key} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                   <div>
@@ -139,21 +141,21 @@ export function SettingsScreen() {
           {tab === 'appearance' && (
             <div className="space-y-6 animate-fade-in">
               <div>
-                <h3 className="font-bold text-slate-900 dark:text-white mb-3">Тема</h3>
+                <h3 className="font-bold text-slate-900 dark:text-white mb-3">{t('settings.theme')}</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => theme !== 'light' && toggleTheme()} className={`p-4 rounded-xl border-2 transition-all ${theme === 'light' ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-slate-700'}`}>
                     <Sun className="w-6 h-6 text-warning-500 mb-2" />
-                    <div className="font-medium text-slate-900 dark:text-white text-sm">Светлая</div>
+                    <div className="font-medium text-slate-900 dark:text-white text-sm">{t('settings.theme.light')}</div>
                   </button>
                   <button onClick={() => theme !== 'dark' && toggleTheme()} className={`p-4 rounded-xl border-2 transition-all ${theme === 'dark' ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-slate-700'}`}>
                     <Moon className="w-6 h-6 text-brand-500 mb-2" />
-                    <div className="font-medium text-slate-900 dark:text-white text-sm">Тёмная</div>
+                    <div className="font-medium text-slate-900 dark:text-white text-sm">{t('settings.theme.dark')}</div>
                   </button>
                 </div>
               </div>
 
               <div>
-                <h3 className="font-bold text-slate-900 dark:text-white mb-3">Язык</h3>
+                <h3 className="font-bold text-slate-900 dark:text-white mb-3">{t('settings.language')}</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {LANGUAGES.map(lang => (
                     <button
@@ -172,60 +174,60 @@ export function SettingsScreen() {
 
           {tab === 'security' && (
             <div className="space-y-4 animate-fade-in">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-2">Безопасность</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white mb-2">{t('settings.security')}</h3>
               <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                 <div className="flex items-center gap-2 mb-2">
                   <Key className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm font-medium text-slate-900 dark:text-white">Пароль</span>
+                  <span className="text-sm font-medium text-slate-900 dark:text-white">{t('settings.password')}</span>
                 </div>
-                <button className="btn-secondary text-sm">Изменить пароль</button>
+                <button className="btn-secondary text-sm">{t('settings.changePassword')}</button>
               </div>
               <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm font-medium text-slate-900 dark:text-white">Двухфакторная аутентификация</span>
+                  <span className="text-sm font-medium text-slate-900 dark:text-white">{t('settings.twoFactor')}</span>
                 </div>
-                <Toggle checked={false} onChange={() => {}} label="Включить 2FA" />
+                <Toggle checked={false} onChange={() => {}} label={t('settings.enable2fa')} />
               </div>
               <div className="p-4 bg-error-50 dark:bg-error-900/20 rounded-xl">
                 <div className="flex items-center gap-2 mb-2">
                   <LogOut className="w-4 h-4 text-error-600" />
-                  <span className="text-sm font-medium text-error-700 dark:text-error-400">Выход из аккаунта</span>
+                  <span className="text-sm font-medium text-error-700 dark:text-error-400">{t('settings.signOut')}</span>
                 </div>
-                <button onClick={signOut} className="btn-danger text-sm">Выйти из всех устройств</button>
+                <button onClick={signOut} className="btn-danger text-sm">{t('settings.signOutAll')}</button>
               </div>
             </div>
           )}
 
           {tab === 'billing' && (
             <div className="space-y-4 animate-fade-in">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-2">Биллинг</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white mb-2">{t('settings.billing')}</h3>
               <div className="p-4 bg-gradient-to-r from-warning-500/10 to-brand-500/10 rounded-xl">
                 <div className="flex items-center gap-3 mb-3">
                   <Crown className="w-8 h-8 text-warning-500" />
                   <div>
-                    <div className="font-bold text-slate-900 dark:text-white">Premium подписка</div>
-                    <div className="text-sm text-slate-500">{profile.is_premium ? `Активна до ${new Date(profile.premium_until || '').toLocaleDateString('ru-RU')}` : 'Не активна'}</div>
+                    <div className="font-bold text-slate-900 dark:text-white">{t('settings.premiumSubscription')}</div>
+                    <div className="text-sm text-slate-500">{profile.is_premium ? `${t('settings.activeUntil')} ${new Date(profile.premium_until || '').toLocaleDateString('ru-RU')}` : t('settings.notActive')}</div>
                   </div>
                 </div>
                 {profile.is_premium ? (
-                  <button className="btn-secondary text-sm">Управлять подпиской</button>
+                  <button className="btn-secondary text-sm">{t('settings.manageSubscription')}</button>
                 ) : (
-                  <button className="btn-primary text-sm">Активировать Premium</button>
+                  <button className="btn-primary text-sm">{t('settings.activatePremium')}</button>
                 )}
               </div>
               <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-5 h-5 text-success-600" />
-                    <span className="text-sm font-medium text-slate-900 dark:text-white">Баланс</span>
+                    <span className="text-sm font-medium text-slate-900 dark:text-white">{t('settings.balance')}</span>
                   </div>
                   <span className="text-lg font-bold text-slate-900 dark:text-white">${profile.balance.toFixed(2)}</span>
                 </div>
               </div>
               <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-                <span className="text-sm font-medium text-slate-900 dark:text-white">История транзакций</span>
-                <p className="text-xs text-slate-500 mt-1">Нет недавних транзакций</p>
+                <span className="text-sm font-medium text-slate-900 dark:text-white">{t('settings.transactionHistory')}</span>
+                <p className="text-xs text-slate-500 mt-1">{t('settings.noTransactions')}</p>
               </div>
             </div>
           )}
