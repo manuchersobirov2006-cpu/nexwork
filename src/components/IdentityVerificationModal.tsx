@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { Modal, Spinner } from './ui';
+import { t } from '../lib/i18n';
 import type { IdentityVerification } from '../lib/types';
 import {
   Upload, User, FileText, AlertCircle,
@@ -30,11 +31,11 @@ export function IdentityVerificationModal({ open, onClose, onSubmitted, existing
     setError(null);
 
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setError('Только JPG, PNG или WebP');
+      setError(t('avatar.onlyFormats'));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setError('Максимальный размер — 5 МБ');
+      setError(t('avatar.maxSize'));
       return;
     }
 
@@ -65,10 +66,10 @@ export function IdentityVerificationModal({ open, onClose, onSubmitted, existing
       }
 
       const { error: faceErr } = await supabase.storage.from('identity-documents').upload(facePath, faceFile, { upsert: true, contentType: faceFile.type });
-      if (faceErr) throw new Error('Ошибка загрузки фото лица');
+      if (faceErr) throw new Error(t('identity.faceUploadError'));
 
       const { error: passportErr } = await supabase.storage.from('identity-documents').upload(passportPath, passportFile, { upsert: true, contentType: passportFile.type });
-      if (passportErr) throw new Error('Ошибка загрузки фото документа');
+      if (passportErr) throw new Error(t('identity.passportUploadError'));
 
       // Create/update verification record
       if (existingVerif) {
@@ -97,8 +98,8 @@ export function IdentityVerificationModal({ open, onClose, onSubmitted, existing
           admins.map(a => ({
             user_id: a.id,
             type: 'verification',
-            title: 'Новая заявка на верификацию',
-            body: `${profile.display_name || profile.full_name} подал(а) заявку на верификацию личности`,
+            title: t('identity.newRequest.title'),
+            body: `${profile.display_name || profile.full_name} ${t('identity.newRequest.body')}`,
             link: 'admin',
           }))
         );
@@ -107,7 +108,7 @@ export function IdentityVerificationModal({ open, onClose, onSubmitted, existing
       await refreshProfile();
       onSubmitted();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка отправки заявки');
+      setError(err instanceof Error ? err.message : t('identity.submitError'));
     } finally {
       setUploading(false);
     }
@@ -126,12 +127,12 @@ export function IdentityVerificationModal({ open, onClose, onSubmitted, existing
   const isRejected = existingVerif?.status === 'rejected';
 
   return (
-    <Modal open={open} onClose={handleClose} size="lg" title="Верификация личности">
+    <Modal open={open} onClose={handleClose} size="lg" title={t('identity.title')}>
       <div className="p-6 space-y-5">
         {isPending && (
           <div className="flex items-center gap-3 p-3 bg-warning-50 dark:bg-warning-900/20 rounded-xl">
             <Hourglass className="w-5 h-5 text-warning-600 shrink-0" />
-            <p className="text-sm text-slate-700 dark:text-slate-300">Ваша заявка на рассмотрении. Это может занять до 48 часов.</p>
+            <p className="text-sm text-slate-700 dark:text-slate-300">{t('identity.pending')}</p>
           </div>
         )}
 
@@ -139,19 +140,19 @@ export function IdentityVerificationModal({ open, onClose, onSubmitted, existing
           <div className="flex items-start gap-3 p-3 bg-error-50 dark:bg-error-900/20 rounded-xl">
             <XCircle className="w-5 h-5 text-error-600 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-error-700">Заявка отклонена</p>
+              <p className="text-sm font-medium text-error-700">{t('identity.rejected')}</p>
               <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">{existingVerif.rejection_reason}</p>
             </div>
           </div>
         )}
 
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Для верификации личности загрузите два фото. После проверки администратором ваш профиль получит статус «Проверен».
+          {t('identity.intro')}
         </p>
 
         {/* Face photo */}
         <div>
-          <label className="label">Фото лица (селфи)</label>
+          <label className="label">{t('identity.facePhoto')}</label>
           <div
             onClick={() => faceInputRef.current?.click()}
             className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center cursor-pointer hover:border-brand-400 transition-colors"
@@ -159,22 +160,22 @@ export function IdentityVerificationModal({ open, onClose, onSubmitted, existing
             {facePreview ? (
               <div className="relative inline-block">
                 <img src={facePreview} alt="Face preview" className="max-h-40 rounded-xl" />
-                <p className="text-xs text-slate-500 mt-2">Нажмите, чтобы изменить</p>
+                <p className="text-xs text-slate-500 mt-2">{t('identity.clickToChange')}</p>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
                 <User className="w-10 h-10 text-slate-400" />
-                <span className="text-sm text-slate-500">Нажмите, чтобы загрузить</span>
+                <span className="text-sm text-slate-500">{t('identity.clickToUpload')}</span>
               </div>
             )}
             <input ref={faceInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => handleFileSelect(e, 'face')} />
           </div>
-          <p className="text-xs text-slate-400 mt-1.5">Хорошее освещение, лицо видно чётко, без фильтров. JPG/PNG/WebP, до 5 МБ.</p>
+          <p className="text-xs text-slate-400 mt-1.5">{t('identity.faceHint')}</p>
         </div>
 
         {/* Passport photo */}
         <div>
-          <label className="label">Фото паспорта / ID</label>
+          <label className="label">{t('identity.passportPhoto')}</label>
           <div
             onClick={() => passportInputRef.current?.click()}
             className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center cursor-pointer hover:border-brand-400 transition-colors"
@@ -182,23 +183,23 @@ export function IdentityVerificationModal({ open, onClose, onSubmitted, existing
             {passportPreview ? (
               <div className="relative inline-block">
                 <img src={passportPreview} alt="Passport preview" className="max-h-40 rounded-xl" />
-                <p className="text-xs text-slate-500 mt-2">Нажмите, чтобы изменить</p>
+                <p className="text-xs text-slate-500 mt-2">{t('identity.clickToChange')}</p>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
                 <FileText className="w-10 h-10 text-slate-400" />
-                <span className="text-sm text-slate-500">Нажмите, чтобы загрузить</span>
+                <span className="text-sm text-slate-500">{t('identity.clickToUpload')}</span>
               </div>
             )}
             <input ref={passportInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => handleFileSelect(e, 'passport')} />
           </div>
-          <p className="text-xs text-slate-400 mt-1.5">Все четыре угла видны, текст читаем, без бликов. JPG/PNG/WebP, до 5 МБ.</p>
+          <p className="text-xs text-slate-400 mt-1.5">{t('identity.passportHint')}</p>
         </div>
 
         <div className="flex items-start gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
           <AlertCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
           <p className="text-xs text-slate-500">
-            Загруженные документы видны только администраторам для проверки. Вы не сможете просмотреть их после отправки.
+            {t('identity.privacyNote')}
           </p>
         </div>
 
@@ -209,14 +210,14 @@ export function IdentityVerificationModal({ open, onClose, onSubmitted, existing
         )}
 
         <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-          <button onClick={handleClose} className="btn-secondary">Отмена</button>
+          <button onClick={handleClose} className="btn-secondary">{t('identity.cancel')}</button>
           <button
             onClick={handleSubmit}
             disabled={uploading || !faceFile || !passportFile}
             className="btn-primary"
           >
             {uploading ? <Spinner className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
-            {isRejected ? 'Отправить заново' : 'Отправить на проверку'}
+            {isRejected ? t('identity.resubmit') : t('identity.submit')}
           </button>
         </div>
       </div>
