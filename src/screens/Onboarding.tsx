@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { CATEGORIES, SKILLS_LIBRARY } from '../lib/constants';
 import { Spinner } from '../components/ui';
+import { useTheme } from '../lib/theme';
+import { t } from '../lib/i18n';
 import { Briefcase, PenTool, Check, ArrowRight, MapPin, Phone } from 'lucide-react';
 
 export function Onboarding() {
   const { profile, updateProfile, completeOnboarding, needsRoleSelection, setRoleAndComplete } = useAuth();
+  const { language } = useTheme();
   const [step, setStep] = useState(needsRoleSelection ? 0 : 0);
   const [role, setRole] = useState<'freelancer' | 'employer'>(profile?.role === 'employer' ? 'employer' : 'freelancer');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -68,9 +71,9 @@ export function Onboarding() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-brand-50 to-white dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
         <div className="w-full max-w-lg card p-8 animate-scale-in">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Добро пожаловать!</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('onb.welcome')}</h2>
           <p className="text-slate-500 dark:text-slate-400 mb-6">
-            Вы вошли через Google. Выберите роль, чтобы продолжить — это можно изменить позже.
+            {t('onb.googleIntro')}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <button
@@ -86,8 +89,8 @@ export function Onboarding() {
               }`}>
                 <PenTool className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-slate-900 dark:text-white mb-1">Специалист / Креатор</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Предлагаю услуги, выполняю заказы</p>
+              <h3 className="font-bold text-slate-900 dark:text-white mb-1">{t('onb.freelancerCreator')}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t('onb.freelancerCreator.desc')}</p>
               {role === 'freelancer' && <Check className="w-5 h-5 text-brand-600 mt-3" />}
             </button>
             <button
@@ -103,14 +106,14 @@ export function Onboarding() {
               }`}>
                 <Briefcase className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-slate-900 dark:text-white mb-1">Компания / Работодатель</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Публикую проекты, нанимаю</p>
+              <h3 className="font-bold text-slate-900 dark:text-white mb-1">{t('onb.companyEmployer')}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t('onb.companyEmployer.desc')}</p>
               {role === 'employer' && <Check className="w-5 h-5 text-brand-600 mt-3" />}
             </button>
           </div>
           <button onClick={handleRoleOnly} disabled={saving} className="btn-primary w-full">
             {saving && <Spinner className="w-4 h-4" />}
-            Продолжить <ArrowRight className="w-4 h-4" />
+            {t('onb.continue')} <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -128,19 +131,19 @@ export function Onboarding() {
 
         {step === 0 && (
           <div className="animate-fade-in">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Кто вы?</h2>
-            <p className="text-slate-500 dark:text-slate-400 mb-6">Выберите роль — это можно изменить позже</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('onb.whoAreYou')}</h2>
+            <p className="text-slate-500 dark:text-slate-400 mb-6">{t('onb.chooseRole')}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button onClick={() => setRole('freelancer')} className={`p-6 rounded-2xl border-2 text-left transition-all duration-200 ${role === 'freelancer' ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>
                 <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3 ${role === 'freelancer' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'}`}><PenTool className="w-6 h-6" /></div>
-                <h3 className="font-bold text-slate-900 dark:text-white mb-1">Фрилансер</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Предлагаю услуги, выполняю заказы и тендеры</p>
+                <h3 className="font-bold text-slate-900 dark:text-white mb-1">{t('onb.freelancer')}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t('onb.freelancer.desc')}</p>
                 {role === 'freelancer' && <Check className="w-5 h-5 text-brand-600 mt-3" />}
               </button>
               <button onClick={() => setRole('employer')} className={`p-6 rounded-2xl border-2 text-left transition-all duration-200 ${role === 'employer' ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>
                 <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3 ${role === 'employer' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'}`}><Briefcase className="w-6 h-6" /></div>
-                <h3 className="font-bold text-slate-900 dark:text-white mb-1">Заказчик</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Публикую проекты, нанимаю исполнителей</p>
+                <h3 className="font-bold text-slate-900 dark:text-white mb-1">{t('onb.employer')}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t('onb.employer.desc')}</p>
                 {role === 'employer' && <Check className="w-5 h-5 text-brand-600 mt-3" />}
               </button>
             </div>
@@ -149,11 +152,11 @@ export function Onboarding() {
 
         {step === 1 && (
           <div className="animate-fade-in">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Выберите специализации</h2>
-            <p className="text-slate-500 dark:text-slate-400 mb-6">{role === 'freelancer' ? 'В каких категориях вы работаете?' : 'Каких специалистов ищете?'}</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('onb.chooseSpecializations')}</h2>
+            <p className="text-slate-500 dark:text-slate-400 mb-6">{role === 'freelancer' ? t('onb.whichCategories.freelancer') : t('onb.whichCategories.employer')}</p>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map(cat => (
-                <button key={cat.key} onClick={() => toggleCategory(cat.key)} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${selectedCategories.includes(cat.key) ? 'bg-brand-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>{cat.label}</button>
+                <button key={cat.key} onClick={() => toggleCategory(cat.key)} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${selectedCategories.includes(cat.key) ? 'bg-brand-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>{language === 'en' ? cat.labelEn : language === 'uz' ? cat.labelUz : cat.label}</button>
               ))}
             </div>
           </div>
@@ -161,18 +164,18 @@ export function Onboarding() {
 
         {step === 2 && role === 'freelancer' && (
           <div className="animate-fade-in">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Ваши навыки</h2>
-            <p className="text-slate-500 dark:text-slate-400 mb-6">Добавьте навыки, чтобы клиенты вас нашли</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('onb.yourSkills')}</h2>
+            <p className="text-slate-500 dark:text-slate-400 mb-6">{t('onb.addSkills')}</p>
             <div className="mb-4 flex gap-2">
-              <input type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCustomSkill())} placeholder="Например, React, Figma, SEO..." className="input flex-1" />
-              <button onClick={addCustomSkill} className="btn-secondary">Добавить</button>
+              <input type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCustomSkill())} placeholder={t('onb.skillPlaceholder')} className="input flex-1" />
+              <button onClick={addCustomSkill} className="btn-secondary">{t('onb.add')}</button>
             </div>
             <div className="flex flex-wrap gap-2 mb-4">
               {selectedSkills.map(skill => (
                 <span key={skill} className="badge bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300 gap-1.5">{skill}<button onClick={() => toggleSkill(skill)} className="hover:text-brand-900">×</button></span>
               ))}
             </div>
-            <p className="text-sm text-slate-500 mb-2">Популярные:</p>
+            <p className="text-sm text-slate-500 mb-2">{t('onb.popular')}</p>
             <div className="flex flex-wrap gap-2">
               {SKILLS_LIBRARY.slice(0, 20).map(skill => (
                 <button key={skill} onClick={() => toggleSkill(skill)} className={`px-3 py-1.5 rounded-lg text-sm transition-all ${selectedSkills.includes(skill) ? 'hidden' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>+ {skill}</button>
@@ -183,24 +186,24 @@ export function Onboarding() {
 
         {step === 2 && role === 'employer' && (
           <div className="animate-fade-in">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">О компании</h2>
-            <p className="text-slate-500 dark:text-slate-400 mb-6">Заполните базовую информацию</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('onb.aboutCompany')}</h2>
+            <p className="text-slate-500 dark:text-slate-400 mb-6">{t('onb.fillBasicInfo')}</p>
             <div className="space-y-4">
-              <div><label className="label">Местоположение</label><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" /><input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Город, страна" className="input pl-10" /></div></div>
-              <div><label className="label">Телефон</label><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" /><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+998 90 123 45 67" className="input pl-10" /></div></div>
-              <div><label className="label">Описание</label><textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} placeholder="Кратко о компании или ваших потребностях" className="input" /></div>
+              <div><label className="label">{t('onb.location')}</label><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" /><input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder={t('onb.location.placeholder')} className="input pl-10" /></div></div>
+              <div><label className="label">{t('onb.phone')}</label><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" /><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+998 90 123 45 67" className="input pl-10" /></div></div>
+              <div><label className="label">{t('onb.description')}</label><textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} placeholder={t('onb.description.placeholder')} className="input" /></div>
             </div>
           </div>
         )}
 
         {step === 3 && role === 'freelancer' && (
           <div className="animate-fade-in">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">О себе</h2>
-            <p className="text-slate-500 dark:text-slate-400 mb-6">Расскажите клиентам о себе</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('onb.aboutYou')}</h2>
+            <p className="text-slate-500 dark:text-slate-400 mb-6">{t('onb.tellClients')}</p>
             <div className="space-y-4">
-              <div><label className="label">Местоположение</label><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" /><input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Город, страна" className="input pl-10" /></div></div>
-              <div><label className="label">Телефон</label><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" /><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+998 90 123 45 67" className="input pl-10" /></div></div>
-              <div><label className="label">Био</label><textarea value={bio} onChange={e => setBio(e.target.value)} rows={4} placeholder="Опишите свой опыт, подход к работе и достижения" className="input" /></div>
+              <div><label className="label">{t('onb.location')}</label><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" /><input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder={t('onb.location.placeholder')} className="input pl-10" /></div></div>
+              <div><label className="label">{t('onb.phone')}</label><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" /><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+998 90 123 45 67" className="input pl-10" /></div></div>
+              <div><label className="label">{t('onb.bio')}</label><textarea value={bio} onChange={e => setBio(e.target.value)} rows={4} placeholder={t('onb.bio.placeholder')} className="input" /></div>
             </div>
           </div>
         )}
@@ -208,17 +211,17 @@ export function Onboarding() {
         {step === 3 && role === 'employer' && (
           <div className="text-center animate-fade-in py-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-success-100 dark:bg-success-900/30 text-success-600 mb-4"><Check className="w-8 h-8" /></div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Готово!</h2>
-            <p className="text-slate-500 dark:text-slate-400">Можно публиковать проекты и искать исполнителей</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('onb.done')}</h2>
+            <p className="text-slate-500 dark:text-slate-400">{t('onb.doneDescription')}</p>
           </div>
         )}
 
         <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
-          <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="btn-ghost disabled:opacity-30">Назад</button>
+          <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="btn-ghost disabled:opacity-30">{t('onb.back')}</button>
           {step < 3 ? (
-            <button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="btn-primary">Далее <ArrowRight className="w-4 h-4" /></button>
+            <button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="btn-primary">{t('onb.next')} <ArrowRight className="w-4 h-4" /></button>
           ) : (
-            <button onClick={handleFinish} disabled={saving} className="btn-primary">{saving && <Spinner className="w-4 h-4" />} Завершить</button>
+            <button onClick={handleFinish} disabled={saving} className="btn-primary">{saving && <Spinner className="w-4 h-4" />} {t('onb.finish')}</button>
           )}
         </div>
       </div>

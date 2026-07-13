@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { Modal, Spinner } from './ui';
+import { useTheme } from '../lib/theme';
+import { t } from '../lib/i18n';
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 
 function GoogleIcon({ className = '' }: { className?: string }) {
@@ -20,6 +22,8 @@ export function AuthModal({ open, onClose, mode: initialMode = 'signin' }: {
   mode?: 'signin' | 'signup';
 }) {
   const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { language } = useTheme();
+  void language;
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,7 +40,7 @@ export function AuthModal({ open, onClose, mode: initialMode = 'signin' }: {
 
     if (mode === 'signup') {
       if (password.length < 6) {
-        setError('Пароль должен быть не менее 6 символов');
+        setError(t('auth.passwordTooShort'));
         setLoading(false);
         return;
       }
@@ -81,10 +85,10 @@ export function AuthModal({ open, onClose, mode: initialMode = 'signin' }: {
             </svg>
           </div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            {mode === 'signin' ? 'Вход в NexWork' : 'Регистрация'}
+            {mode === 'signin' ? t('auth.signInTitle') : t('auth.signUpTitle')}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {mode === 'signin' ? 'Войдите в свой аккаунт' : 'Создайте аккаунт за минуту'}
+            {mode === 'signin' ? t('auth.signInSubtitle') : t('auth.signUpSubtitle')}
           </p>
         </div>
 
@@ -95,20 +99,20 @@ export function AuthModal({ open, onClose, mode: initialMode = 'signin' }: {
           className="w-full inline-flex items-center justify-center gap-3 px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-200 active:scale-95 disabled:opacity-50 mb-4"
         >
           {googleLoading ? <Spinner className="w-5 h-5" /> : <GoogleIcon />}
-          Войти через Google
+          {t('auth.googleSignIn')}
         </button>
 
         {/* Divider */}
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-          <span className="text-xs text-slate-400">или</span>
+          <span className="text-xs text-slate-400">{t('auth.or')}</span>
           <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'signup' && (
             <div>
-              <label className="label">Имя</label>
+              <label className="label">{t('auth.name')}</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input type="text" required value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Иван Иванов" className="input pl-10" />
@@ -117,7 +121,7 @@ export function AuthModal({ open, onClose, mode: initialMode = 'signin' }: {
           )}
 
           <div>
-            <label className="label">Email</label>
+            <label className="label">{t('auth.email')}</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="input pl-10" />
@@ -125,7 +129,7 @@ export function AuthModal({ open, onClose, mode: initialMode = 'signin' }: {
           </div>
 
           <div>
-            <label className="label">Пароль</label>
+            <label className="label">{t('auth.password')}</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input type={showPassword ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="input pl-10 pr-10" />
@@ -141,14 +145,14 @@ export function AuthModal({ open, onClose, mode: initialMode = 'signin' }: {
 
           <button type="submit" disabled={loading} className="btn-primary w-full">
             {loading ? <Spinner className="w-4 h-4" /> : null}
-            {mode === 'signin' ? 'Войти' : 'Зарегистрироваться'}
+            {mode === 'signin' ? t('auth.signIn') : t('auth.signUp')}
           </button>
         </form>
 
         <div className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
-          {mode === 'signin' ? 'Нет аккаунта? ' : 'Уже есть аккаунт? '}
+          {mode === 'signin' ? t('auth.noAccount') : t('auth.hasAccount')}
           <button onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); }} className="text-brand-600 hover:text-brand-700 font-semibold">
-            {mode === 'signin' ? 'Регистрация' : 'Войти'}
+            {mode === 'signin' ? t('auth.signUp') : t('auth.signIn')}
           </button>
         </div>
       </div>
