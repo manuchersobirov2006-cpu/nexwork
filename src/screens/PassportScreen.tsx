@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase';
 import { formatDate } from '../lib/format';
 import { Avatar, Badge, Stars, Spinner } from '../components/ui';
 import { AvatarUpload } from '../components/AvatarUpload';
-import { PhoneVerificationModal } from '../components/PhoneVerificationModal';
 import { IdentityVerificationModal } from '../components/IdentityVerificationModal';
 import { useTheme } from '../lib/theme';
 import { t } from '../lib/i18n';
@@ -12,12 +11,14 @@ import type { Gig, Review, IdentityVerification } from '../lib/types';
 import {
   ShieldCheck, Shield, Phone, Mail, MapPin, Globe, Award,
   CheckCircle, Clock, TrendingUp, Edit, Save, X,
-  Briefcase, Zap, Hourglass, XCircle
+  Briefcase, Zap, Hourglass, XCircle, Send
 } from 'lucide-react';
+
+const NEXWORK_TG = 'https://t.me/nexwork_uz';
+const NEXWORK_PHONE = '+998200103133';
 
 function useVerificationSteps() {
   return [
-    { key: 'phone', label: t('passport.step.phone.label'), icon: Phone, description: t('passport.step.phone.description') },
     { key: 'identity', label: t('passport.step.identity.label'), icon: ShieldCheck, description: t('passport.step.identity.description') },
     { key: 'skills', label: t('passport.step.skills.label'), icon: Award, description: t('passport.step.skills.description') },
     { key: 'payment', label: t('passport.step.payment.label'), icon: Briefcase, description: t('passport.step.payment.description') },
@@ -44,7 +45,6 @@ export function PassportScreen() {
   });
   const [skillInput, setSkillInput] = useState('');
   const [langInput, setLangInput] = useState('');
-  const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [showIdentityModal, setShowIdentityModal] = useState(false);
   const [identityVerif, setIdentityVerif] = useState<IdentityVerification | null>(null);
 
@@ -96,7 +96,6 @@ export function PassportScreen() {
   };
 
   const verificationPercent = VERIFICATION_STEPS.filter(s => {
-    if (s.key === 'phone') return profile.verification_level === 'phone' || profile.verification_level === 'identity' || profile.verification_level === 'full' || !!profile.phone;
     if (s.key === 'identity') return profile.verification_level === 'identity' || profile.verification_level === 'full';
     if (s.key === 'skills') return profile.skills.length > 0;
     if (s.key === 'payment') return profile.balance > 0;
@@ -267,14 +266,12 @@ export function PassportScreen() {
           </div>
           <div className="space-y-3">
             {VERIFICATION_STEPS.map(step => {
-              const phoneDone = profile.verification_level === 'phone' || profile.verification_level === 'identity' || profile.verification_level === 'full' || (!!profile.phone && profile.verification_level !== 'none');
               const identityApproved = profile.verification_level === 'identity' || profile.verification_level === 'full';
               const identityPending = identityVerif?.status === 'pending';
               const identityRejected = identityVerif?.status === 'rejected';
               const skillsDone = profile.skills.length > 0;
               const paymentDone = profile.balance > 0;
-              const done = (step.key === 'phone' && phoneDone) ||
-                (step.key === 'identity' && identityApproved) ||
+              const done = (step.key === 'identity' && identityApproved) ||
                 (step.key === 'skills' && skillsDone) ||
                 (step.key === 'payment' && paymentDone);
               return (
@@ -292,16 +289,13 @@ export function PassportScreen() {
                       <div className="text-xs text-error-600 flex items-center gap-1 mt-1"><XCircle className="w-3 h-3" /> {t('passport.rejected')}: {identityVerif.rejection_reason}</div>
                     )}
                   </div>
-                  {!done && step.key === 'phone' && (
-                    <button onClick={() => setShowPhoneModal(true)} className="btn-ghost text-xs">{t('passport.verify')}</button>
-                  )}
                   {!done && step.key === 'identity' && !identityPending && (
                     <button onClick={() => setShowIdentityModal(true)} className="btn-ghost text-xs">{t('passport.verify')}</button>
                   )}
                   {!done && step.key === 'identity' && identityPending && (
                     <Badge color="amber"><Hourglass className="w-3 h-3" /> {t('passport.pending')}</Badge>
                   )}
-                  {!done && step.key !== 'phone' && step.key !== 'identity' && (
+                  {!done && step.key !== 'identity' && (
                     <button className="btn-ghost text-xs">{t('passport.verify')}</button>
                   )}
                 </div>
@@ -333,7 +327,39 @@ export function PassportScreen() {
         </div>
       )}
 
-      <PhoneVerificationModal open={showPhoneModal} onClose={() => setShowPhoneModal(false)} onVerified={() => { setShowPhoneModal(false); refreshProfile?.(); }} />
+      {/* Support */}
+      <div className="card p-6 mt-6 animate-slide-up">
+        <h3 className="font-bold text-slate-900 dark:text-white mb-4">{t('passport.support')}</h3>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <a
+            href={NEXWORK_TG}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-lg bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center shrink-0">
+              <Send className="w-5 h-5 text-brand-600 dark:text-brand-400" />
+            </div>
+            <div>
+              <div className="text-sm font-medium text-slate-900 dark:text-white">Telegram</div>
+              <div className="text-xs text-slate-500">@nexwork_uz</div>
+            </div>
+          </a>
+          <a
+            href={`tel:${NEXWORK_PHONE}`}
+            className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-lg bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center shrink-0">
+              <Phone className="w-5 h-5 text-brand-600 dark:text-brand-400" />
+            </div>
+            <div>
+              <div className="text-sm font-medium text-slate-900 dark:text-white">{t('passport.phone')}</div>
+              <div className="text-xs text-slate-500">{NEXWORK_PHONE}</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
       <IdentityVerificationModal open={showIdentityModal} onClose={() => setShowIdentityModal(false)} onSubmitted={() => { setShowIdentityModal(false); refreshProfile?.(); }} existingVerif={identityVerif} />
     </div>
   );

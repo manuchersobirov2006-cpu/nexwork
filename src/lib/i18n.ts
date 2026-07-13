@@ -218,6 +218,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'passport.step.skills.description': 'Пройдите тестирование по навыкам',
     'passport.step.payment.label': 'Платёжные данные',
     'passport.step.payment.description': 'Привяжите счёт для вывода средств',
+    'passport.support': 'Поддержка',
     // Chat
     'chat.title': 'Сообщения',
     'chat.writeById': 'Написать по ID',
@@ -802,6 +803,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'passport.step.skills.description': 'Koʻnikmalar boʻyicha testdan oʻting',
     'passport.step.payment.label': 'Toʻlov maʼlumotlari',
     'passport.step.payment.description': 'Mablagʻ yechish uchun hisob ulang',
+    'passport.support': 'Yordam',
     'chat.title': 'Xabarlar',
     'chat.writeById': 'ID orqali yozish',
     'chat.searchChats': 'Chatlarni qidirish...',
@@ -1373,6 +1375,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'passport.step.skills.description': 'Take a skills assessment',
     'passport.step.payment.label': 'Payment details',
     'passport.step.payment.description': 'Link an account to withdraw funds',
+    'passport.support': 'Support',
     'chat.title': 'Messages',
     'chat.writeById': 'Message by ID',
     'chat.searchChats': 'Search chats...',
