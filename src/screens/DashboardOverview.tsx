@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
+import { useTheme } from '../lib/theme';
 import { supabase } from '../lib/supabase';
 import { formatPrice, timeAgo } from '../lib/format';
 import { Avatar, Badge, Stars, Spinner, EmptyState } from '../components/ui';
+import { t } from '../lib/i18n';
 import type { ScreenKey } from '../components/DashboardShell';
 import type { Order, Gig, Project, Notification } from '../lib/types';
 import {
@@ -13,6 +15,8 @@ import {
 
 export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) => void }) {
   const { profile } = useAuth();
+  const { language } = useTheme();
+  void language;
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
   const [gigs, setGigs] = useState<Gig[]>([]);
@@ -45,30 +49,30 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
 
   const greeting = (() => {
     const h = new Date().getHours();
-    if (h < 12) return 'Доброе утро';
-    if (h < 18) return 'Добрый день';
-    return 'Добрый вечер';
+    if (h < 12) return t('dash.morning');
+    if (h < 18) return t('dash.day');
+    return t('dash.evening');
   })();
 
   const stats = [
-    { label: 'Заработано', value: formatPrice(completedRevenue), icon: DollarSign, color: 'success' },
-    { label: 'Активных заказов', value: activeOrders.length.toString(), icon: ShoppingCart, color: 'blue' },
-    { label: 'Просмотров', value: totalViews.toString(), icon: Eye, color: 'accent' },
-    { label: 'Услуг', value: gigs.length.toString(), icon: Package, color: 'amber' },
+    { label: t('dash.stat.earned'), value: formatPrice(completedRevenue), icon: DollarSign, color: 'success' },
+    { label: t('dash.stat.activeOrders'), value: activeOrders.length.toString(), icon: ShoppingCart, color: 'blue' },
+    { label: t('dash.stat.views'), value: totalViews.toString(), icon: Eye, color: 'accent' },
+    { label: t('dash.stat.gigs'), value: gigs.length.toString(), icon: Package, color: 'amber' },
   ];
 
   const quickActions = profile.role === 'freelancer'
     ? [
-        { label: 'Создать услугу', icon: Plus, screen: 'gigs' as ScreenKey, color: 'bg-brand-600' },
-        { label: 'Найти тендеры', icon: Gavel, screen: 'board' as ScreenKey, color: 'bg-accent-600' },
-        { label: 'Сообщения', icon: MessageSquare, screen: 'chat' as ScreenKey, color: 'bg-success-600' },
-        { label: 'Аналитика', icon: TrendingUp, screen: 'analytics' as ScreenKey, color: 'bg-purple-600' },
+        { label: t('dash.action.createGig'), icon: Plus, screen: 'gigs' as ScreenKey, color: 'bg-brand-600' },
+        { label: t('dash.action.findTenders'), icon: Gavel, screen: 'board' as ScreenKey, color: 'bg-accent-600' },
+        { label: t('dash.action.messages'), icon: MessageSquare, screen: 'chat' as ScreenKey, color: 'bg-success-600' },
+        { label: t('dash.action.analytics'), icon: TrendingUp, screen: 'analytics' as ScreenKey, color: 'bg-purple-600' },
       ]
     : [
-        { label: 'Опубликовать проект', icon: Plus, screen: 'board' as ScreenKey, color: 'bg-brand-600' },
-        { label: 'Найти услуги', icon: Package, screen: 'gigs' as ScreenKey, color: 'bg-accent-600' },
-        { label: 'Сообщения', icon: MessageSquare, screen: 'chat' as ScreenKey, color: 'bg-success-600' },
-        { label: 'Компании', icon: Package, screen: 'companies' as ScreenKey, color: 'bg-purple-600' },
+        { label: t('dash.action.postProject'), icon: Plus, screen: 'board' as ScreenKey, color: 'bg-brand-600' },
+        { label: t('dash.action.findGigs'), icon: Package, screen: 'gigs' as ScreenKey, color: 'bg-accent-600' },
+        { label: t('dash.action.messages'), icon: MessageSquare, screen: 'chat' as ScreenKey, color: 'bg-success-600' },
+        { label: t('dash.action.companies'), icon: Package, screen: 'companies' as ScreenKey, color: 'bg-purple-600' },
       ];
 
   return (
@@ -79,7 +83,7 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
           {greeting}, {profile.display_name || profile.full_name}!
         </h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
-          {profile.role === 'employer' ? 'Управляйте проектами и находите исполнителей' : 'Управляйте заказами и развивайте бизнес'}
+          {profile.role === 'employer' ? t('dash.subtitle.employer') : t('dash.subtitle.freelancer')}
         </p>
       </div>
 
@@ -104,8 +108,8 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
               <Crown className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-slate-900 dark:text-white">Активируйте Premium</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Приоритет в поиске, меньше комиссий, премиум-бейдж</p>
+              <h3 className="font-bold text-slate-900 dark:text-white">{t('dash.premium.title')}</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">{t('dash.premium.subtitle')}</p>
             </div>
             <ArrowRight className="w-5 h-5 text-slate-400 shrink-0" />
           </div>
@@ -115,7 +119,7 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Quick actions */}
         <div className="card p-5 animate-slide-up">
-          <h3 className="font-bold text-slate-900 dark:text-white mb-4">Быстрые действия</h3>
+          <h3 className="font-bold text-slate-900 dark:text-white mb-4">{t('dash.quickActions')}</h3>
           <div className="grid grid-cols-2 gap-3">
             {quickActions.map(action => (
               <button
@@ -135,11 +139,11 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
         {/* Recent orders */}
         <div className="card p-5 animate-slide-up lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-slate-900 dark:text-white">Последние заказы</h3>
-            {orders.length > 0 && <button onClick={() => onNavigate('analytics')} className="text-sm text-brand-600 hover:text-brand-700 font-medium">Все</button>}
+            <h3 className="font-bold text-slate-900 dark:text-white">{t('dash.recentOrders')}</h3>
+            {orders.length > 0 && <button onClick={() => onNavigate('analytics')} className="text-sm text-brand-600 hover:text-brand-700 font-medium">{t('dash.all')}</button>}
           </div>
           {orders.length === 0 ? (
-            <EmptyState icon={ShoppingCart} title="Заказов пока нет" description={profile.role === 'freelancer' ? 'Создайте услугу, чтобы получить заказы' : 'Закажите услугу из каталога'} action={<button onClick={() => onNavigate('gigs')} className="btn-primary mt-2 text-sm">В каталог</button>} />
+            <EmptyState icon={ShoppingCart} title={t('dash.noOrders')} description={profile.role === 'freelancer' ? t('dash.noOrders.freelancer') : t('dash.noOrders.employer')} action={<button onClick={() => onNavigate('gigs')} className="btn-primary mt-2 text-sm">{t('dash.toCatalog')}</button>} />
           ) : (
             <div className="space-y-2">
               {orders.map(order => {
@@ -149,13 +153,13 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
                   <div key={order.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                     <Avatar src={otherProfile?.avatar_url ?? undefined} name={otherProfile?.display_name || otherProfile?.email} size={36} />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{order.gig?.title || 'Заказ'}</div>
+                      <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{order.gig?.title || t('dash.order')}</div>
                       <div className="text-xs text-slate-500">{otherProfile?.display_name || otherProfile?.full_name} · {timeAgo(order.created_at)}</div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      {order.status === 'completed' ? <Badge color="green"><CheckCircle className="w-3 h-3" /> Готов</Badge>
-                        : order.status === 'active' ? <Badge color="blue"><Clock className="w-3 h-3" /> В работе</Badge>
-                        : order.status === 'pending' ? <Badge color="amber"><Clock className="w-3 h-3" /> Ожидает</Badge>
+                      {order.status === 'completed' ? <Badge color="green"><CheckCircle className="w-3 h-3" /> {t('dash.status.completed')}</Badge>
+                        : order.status === 'active' ? <Badge color="blue"><Clock className="w-3 h-3" /> {t('dash.status.active')}</Badge>
+                        : order.status === 'pending' ? <Badge color="amber"><Clock className="w-3 h-3" /> {t('dash.status.pending')}</Badge>
                         : <Badge color="red"><AlertCircle className="w-3 h-3" /> {order.status}</Badge>}
                       <span className="font-semibold text-slate-900 dark:text-white text-sm">{formatPrice(order.price)}</span>
                     </div>
@@ -170,9 +174,9 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
       {/* Recent notifications + Recommended gigs */}
       <div className="grid lg:grid-cols-2 gap-6 mt-6">
         <div className="card p-5 animate-slide-up">
-          <h3 className="font-bold text-slate-900 dark:text-white mb-4">Уведомления</h3>
+          <h3 className="font-bold text-slate-900 dark:text-white mb-4">{t('dash.notifications')}</h3>
           {notifications.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-4">Нет уведомлений</p>
+            <p className="text-sm text-slate-500 text-center py-4">{t('dash.noNotifications')}</p>
           ) : (
             <div className="space-y-2">
               {notifications.map(n => (
@@ -194,8 +198,8 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
         {profile.role === 'freelancer' && gigs.length > 0 && (
           <div className="card p-5 animate-slide-up">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-900 dark:text-white">Мои услуги</h3>
-              <button onClick={() => onNavigate('gigs')} className="text-sm text-brand-600 font-medium">Все</button>
+              <h3 className="font-bold text-slate-900 dark:text-white">{t('dash.myGigs')}</h3>
+              <button onClick={() => onNavigate('gigs')} className="text-sm text-brand-600 font-medium">{t('dash.all')}</button>
             </div>
             <div className="space-y-2">
               {gigs.map(gig => (
@@ -205,7 +209,7 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{gig.title}</div>
-                    <div className="text-xs text-slate-500">{gig.orders_count} заказов · {gig.views} просмотров</div>
+                    <div className="text-xs text-slate-500">{gig.orders_count} {t('dash.ordersCount')} · {gig.views} {t('dash.viewsCount')}</div>
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-bold text-brand-600 dark:text-brand-400">{formatPrice(gig.price)}</div>
@@ -220,8 +224,8 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
         {profile.role === 'employer' && projects.length > 0 && (
           <div className="card p-5 animate-slide-up">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-slate-900 dark:text-white">Мои проекты</h3>
-              <button onClick={() => onNavigate('board')} className="text-sm text-brand-600 font-medium">Все</button>
+              <h3 className="font-bold text-slate-900 dark:text-white">{t('dash.myProjects')}</h3>
+              <button onClick={() => onNavigate('board')} className="text-sm text-brand-600 font-medium">{t('dash.all')}</button>
             </div>
             <div className="space-y-2">
               {projects.map(p => (
@@ -231,10 +235,10 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{p.title}</div>
-                    <div className="text-xs text-slate-500">{p.bids_count} заявок · {timeAgo(p.created_at)}</div>
+                    <div className="text-xs text-slate-500">{p.bids_count} {t('dash.bidsCount')} · {timeAgo(p.created_at)}</div>
                   </div>
                   <Badge color={p.status === 'open' ? 'green' : p.status === 'in_progress' ? 'blue' : 'slate'}>
-                    {p.status === 'open' ? 'Открыт' : p.status === 'in_progress' ? 'В работе' : 'Завершён'}
+                    {p.status === 'open' ? t('dash.status.open') : p.status === 'in_progress' ? t('dash.status.in_progress') : t('dash.status.done')}
                   </Badge>
                 </div>
               ))}
