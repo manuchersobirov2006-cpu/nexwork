@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Spinner } from './ui';
+import { t } from '../lib/i18n';
 import { Upload, X, AlertCircle, GripVertical } from 'lucide-react';
 
 type UploadStatus = 'pending' | 'uploading' | 'done' | 'error';
@@ -62,7 +63,7 @@ export function GigImageUpload({
           file,
           previewUrl: '',
           status: 'error',
-          error: 'Только JPG, PNG, WebP',
+          error: t('gigImg.onlyFormats'),
         });
         continue;
       }
@@ -72,7 +73,7 @@ export function GigImageUpload({
           file,
           previewUrl: '',
           status: 'error',
-          error: 'Макс 5 МБ',
+          error: t('gigImg.maxSize'),
         });
         continue;
       }
@@ -105,7 +106,7 @@ export function GigImageUpload({
         .upload(path, item.file, { upsert: false, contentType: item.file.type });
 
       if (error) {
-        setImages(prev => prev.map(i => i.id === item.id ? { ...i, status: 'error', error: 'Ошибка загрузки' } : i));
+        setImages(prev => prev.map(i => i.id === item.id ? { ...i, status: 'error', error: t('gigImg.uploadError') } : i));
       } else {
         const { data: urlData } = supabase.storage.from('service-images').getPublicUrl(path);
         const url = urlData.publicUrl;
@@ -147,7 +148,7 @@ export function GigImageUpload({
 
   return (
     <div>
-      <label className="label">Фото работ (до {MAX_IMAGES} изображений)</label>
+      <label className="label">{t('gigImg.label').replace('{max}', String(MAX_IMAGES))}</label>
       <div
         onDragOver={e => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
@@ -159,9 +160,9 @@ export function GigImageUpload({
       >
         <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Перетащите фото сюда или нажмите для выбора
+          {t('gigImg.dropHint')}
         </p>
-        <p className="text-xs text-slate-400 mt-1">JPG, PNG, WebP · до 5 МБ · первое фото — обложка</p>
+        <p className="text-xs text-slate-400 mt-1">{t('gigImg.formatsHint')}</p>
         <input
           ref={fileInputRef}
           type="file"
@@ -199,7 +200,7 @@ export function GigImageUpload({
                 <>
                   <img src={img.previewUrl} alt="" className="w-full h-full object-cover" />
                   {index === 0 && (
-                    <div className="absolute top-1 left-1 px-1.5 py-0.5 text-[10px] font-bold bg-brand-600 text-white rounded">Обложка</div>
+                    <div className="absolute top-1 left-1 px-1.5 py-0.5 text-[10px] font-bold bg-brand-600 text-white rounded">{t('gigImg.cover')}</div>
                   )}
                   <button
                     onClick={e => { e.stopPropagation(); removeImage(img.id); }}
@@ -219,14 +220,14 @@ export function GigImageUpload({
 
       {uploading && (
         <p className="text-xs text-brand-600 mt-2 flex items-center gap-1.5">
-          <Spinner className="w-3 h-3" /> Загрузка изображений...
+          <Spinner className="w-3 h-3" /> {t('gigImg.uploading')}
         </p>
       )}
 
       {images.some(i => i.status === 'error') && (
         <p className="text-xs text-error-600 mt-2 flex items-center gap-1.5">
           <AlertCircle className="w-3 h-3" />
-          {images.filter(i => i.status === 'error').length} изображ. не загрузилось — удалите и попробуйте снова
+          {images.filter(i => i.status === 'error').length} {t('gigImg.failedCount')}
         </p>
       )}
     </div>
