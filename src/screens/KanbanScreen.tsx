@@ -4,6 +4,8 @@ import { useAuth } from '../lib/auth';
 import { TASK_COLUMNS, PRIORITY_LABELS } from '../lib/constants';
 import { daysUntil } from '../lib/format';
 import { Modal, EmptyState, Spinner, Badge } from '../components/ui';
+import { useTheme } from '../lib/theme';
+import { t } from '../lib/i18n';
 import type { Task } from '../lib/types';
 import {
   Plus, GripVertical, Flag,
@@ -26,6 +28,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 export function KanbanScreen() {
   const { profile } = useAuth();
+  const { language } = useTheme();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -94,21 +97,21 @@ export function KanbanScreen() {
     <div className="p-4 sm:p-6 lg:p-8 h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Доска задач</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Управляйте своими рабочим процессом</p>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">{t('kanban.title')}</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{t('kanban.subtitle')}</p>
         </div>
         <button onClick={() => { setCreateStatus('todo'); setShowCreateModal(true); }} className="btn-primary">
           <Plus className="w-4 h-4" />
-          Новая задача
+          {t('kanban.newTask')}
         </button>
       </div>
 
       {tasks.length === 0 && !loading ? (
         <EmptyState
           icon={KanbanSquare}
-          title="Доска пуста"
-          description="Создайте первую задачу, чтобы начать работу"
-          action={<button onClick={() => setShowCreateModal(true)} className="btn-primary mt-2"><Plus className="w-4 h-4" /> Создать задачу</button>}
+          title={t('kanban.empty.title')}
+          description={t('kanban.empty.description')}
+          action={<button onClick={() => setShowCreateModal(true)} className="btn-primary mt-2"><Plus className="w-4 h-4" /> {t('kanban.createTask')}</button>}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-1 overflow-x-auto">
@@ -124,7 +127,7 @@ export function KanbanScreen() {
                 <div className="flex items-center justify-between mb-3 px-1">
                   <div className="flex items-center gap-2">
                     <span className={`w-2.5 h-2.5 rounded-full ${COLUMN_COLORS[col.color]}`} />
-                    <span className="font-semibold text-slate-900 dark:text-white text-sm">{col.label}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white text-sm">{language === 'en' ? col.labelEn : language === 'uz' ? col.labelUz : col.label}</span>
                     <span className="text-xs text-slate-400">({colTasks.length})</span>
                   </div>
                   <button onClick={() => { setCreateStatus(col.key as typeof createStatus); setShowCreateModal(true); }} className="btn-ghost !p-1">
@@ -154,7 +157,7 @@ export function KanbanScreen() {
                           {task.due_date && (
                             <span className={`text-[11px] flex items-center gap-1 ${overdue ? 'text-error-600' : 'text-slate-500'}`}>
                               {overdue ? <AlertCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                              {overdue ? `Просрочено ${Math.abs(remaining!)}д` : `${remaining}д`}
+                              {overdue ? `${t('kanban.overdue')} ${Math.abs(remaining!)}${t('kanban.days')}` : `${remaining}${t('kanban.days')}`}
                             </span>
                           )}
                           {task.labels.map(l => <Badge key={l} color="slate" className="!text-[10px]">{l}</Badge>)}
@@ -203,6 +206,7 @@ function TaskModal({ task, onClose, onSave, onDelete, status }: {
   const [taskStatus, setTaskStatus] = useState(task?.status || status || 'todo');
   const [labels, setLabels] = useState<string[]>(task?.labels || []);
   const [labelInput, setLabelInput] = useState('');
+  const { language } = useTheme();
 
   const addLabel = () => {
     const l = labelInput.trim();
@@ -223,38 +227,38 @@ function TaskModal({ task, onClose, onSave, onDelete, status }: {
   };
 
   return (
-    <Modal open onClose={onClose} size="md" title={task ? 'Редактировать задачу' : 'Новая задача'}>
+    <Modal open onClose={onClose} size="md" title={task ? t('kanban.editTask') : t('kanban.newTaskTitle')}>
       <div className="p-6 space-y-4">
         <div>
-          <label className="label">Название</label>
-          <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Что нужно сделать?" className="input" autoFocus />
+          <label className="label">{t('kanban.name')}</label>
+          <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder={t('kanban.name.placeholder')} className="input" autoFocus />
         </div>
         <div>
-          <label className="label">Описание</label>
-          <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Подробнее..." className="input" />
+          <label className="label">{t('kanban.description')}</label>
+          <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder={t('kanban.description.placeholder')} className="input" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label">Приоритет</label>
+            <label className="label">{t('kanban.priority')}</label>
             <select value={priority} onChange={e => setPriority(e.target.value as Task['priority'])} className="input">
-              {Object.entries(PRIORITY_LABELS).map(([key, val]) => <option key={key} value={key}>{val.ru}</option>)}
+              {Object.entries(PRIORITY_LABELS).map(([key, val]) => <option key={key} value={key}>{language === 'en' ? val.en : language === 'uz' ? val.uz : val.ru}</option>)}
             </select>
           </div>
           <div>
-            <label className="label">Статус</label>
+            <label className="label">{t('kanban.status')}</label>
             <select value={taskStatus} onChange={e => setTaskStatus(e.target.value as Task['status'])} className="input">
-              {TASK_COLUMNS.map(col => <option key={col.key} value={col.key}>{col.label}</option>)}
+              {TASK_COLUMNS.map(col => <option key={col.key} value={col.key}>{language === 'en' ? col.labelEn : language === 'uz' ? col.labelUz : col.label}</option>)}
             </select>
           </div>
         </div>
         <div>
-          <label className="label">Срок</label>
+          <label className="label">{t('kanban.deadline')}</label>
           <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="input" />
         </div>
         <div>
-          <label className="label">Метки</label>
+          <label className="label">{t('kanban.labels')}</label>
           <div className="flex gap-2 mb-2">
-            <input type="text" value={labelInput} onChange={e => setLabelInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addLabel())} placeholder="Добавить метку" className="input" />
+            <input type="text" value={labelInput} onChange={e => setLabelInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addLabel())} placeholder={t('kanban.addLabel')} className="input" />
             <button onClick={addLabel} className="btn-secondary">+</button>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -265,13 +269,13 @@ function TaskModal({ task, onClose, onSave, onDelete, status }: {
           {onDelete ? (
             <button onClick={onDelete} className="btn-danger !py-2">
               <Trash2 className="w-4 h-4" />
-              Удалить
+              {t('kanban.delete')}
             </button>
           ) : <div />}
           <div className="flex gap-2">
-            <button onClick={onClose} className="btn-secondary">Отмена</button>
+            <button onClick={onClose} className="btn-secondary">{t('kanban.cancel')}</button>
             <button onClick={handleSave} disabled={!title.trim()} className="btn-primary">
-              {task ? 'Сохранить' : 'Создать'}
+              {task ? t('kanban.save') : t('kanban.create')}
             </button>
           </div>
         </div>

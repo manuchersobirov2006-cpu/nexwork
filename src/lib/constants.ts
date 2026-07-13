@@ -108,17 +108,17 @@ export const PROJECT_STATUS_LABELS: Record<string, { ru: string; color: string }
 };
 
 export const TASK_COLUMNS = [
-  { key: 'todo', label: 'К выполнению', labelEn: 'To Do', color: 'slate' },
-  { key: 'in_progress', label: 'В работе', labelEn: 'In Progress', color: 'blue' },
-  { key: 'review', label: 'На проверке', labelEn: 'Review', color: 'amber' },
-  { key: 'done', label: 'Готово', labelEn: 'Done', color: 'green' },
+  { key: 'todo', label: 'К выполнению', labelUz: 'Bajarish kerak', labelEn: 'To Do', color: 'slate' },
+  { key: 'in_progress', label: 'В работе', labelUz: 'Jarayonda', labelEn: 'In Progress', color: 'blue' },
+  { key: 'review', label: 'На проверке', labelUz: 'Tekshiruvda', labelEn: 'Review', color: 'amber' },
+  { key: 'done', label: 'Готово', labelUz: 'Tayyor', labelEn: 'Done', color: 'green' },
 ];
 
-export const PRIORITY_LABELS: Record<string, { ru: string; color: string }> = {
-  low: { ru: 'Низкий', color: 'slate' },
-  medium: { ru: 'Средний', color: 'blue' },
-  high: { ru: 'Высокий', color: 'amber' },
-  urgent: { ru: 'Срочный', color: 'red' },
+export const PRIORITY_LABELS: Record<string, { ru: string; uz: string; en: string; color: string }> = {
+  low: { ru: 'Низкий', uz: 'Past', en: 'Low', color: 'slate' },
+  medium: { ru: 'Средний', uz: 'Oʻrtacha', en: 'Medium', color: 'blue' },
+  high: { ru: 'Высокий', uz: 'Yuqori', en: 'High', color: 'amber' },
+  urgent: { ru: 'Срочный', uz: 'Shoshilinch', en: 'Urgent', color: 'red' },
 };
 
 export const JOB_TYPE_LABELS: Record<string, string> = {
