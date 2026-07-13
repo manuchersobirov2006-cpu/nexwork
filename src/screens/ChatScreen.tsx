@@ -3,11 +3,15 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { timeAgo, formatDateTime } from '../lib/format';
 import { Avatar, EmptyState, Spinner } from '../components/ui';
+import { useTheme } from '../lib/theme';
+import { t } from '../lib/i18n';
 import type { Chat, Message, Profile } from '../lib/types';
 import { Send, MessageSquare, Search, ArrowLeft, Paperclip, Smile, UserPlus, AlertCircle } from 'lucide-react';
 
 export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
   const { profile } = useAuth();
+  const { language } = useTheme();
+  void language;
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -107,7 +111,7 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
       await supabase.from('notifications').insert({
         user_id: otherId,
         type: 'message',
-        title: 'Новое сообщение',
+        title: t('chat.newMessage'),
         body: msg.slice(0, 50),
         link: 'chat',
       });
@@ -130,7 +134,7 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
       .maybeSingle();
 
     if (lookupError || !targetUser) {
-      setIdError('Пользователь с таким ID не найден');
+      setIdError(t('chat.byId.notFound'));
       setIdLoading(false);
       return;
     }
@@ -139,7 +143,7 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
 
     // Can't chat with yourself
     if (target.id === profile.id) {
-      setIdError('Нельзя начать чат с самим собой');
+      setIdError(t('chat.byId.self'));
       setIdLoading(false);
       return;
     }
@@ -195,19 +199,19 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
       <div className={`${activeChat ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-80 lg:w-96 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800`}>
         <div className="p-4 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Сообщения</h1>
-            <button onClick={() => setShowNewChat(true)} className="btn-ghost !p-1.5" title="Написать по ID">
+            <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">{t('chat.title')}</h1>
+            <button onClick={() => setShowNewChat(true)} className="btn-ghost !p-1.5" title={t('chat.writeById')}>
               <UserPlus className="w-5 h-5" />
             </button>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Поиск чатов..." className="input-sm input pl-9" />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={t('chat.searchChats')} className="input-sm input pl-9" />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto scrollbar-thin">
           {filteredChats.length === 0 ? (
-            <EmptyState icon={MessageSquare} title="Нет чатов" description="Начните общение с продавцом услуги" />
+            <EmptyState icon={MessageSquare} title={t('chat.noChats.title')} description={t('chat.noChats.description')} />
           ) : (
             filteredChats.map(chat => (
               <button
@@ -226,7 +230,7 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
                     <span className="font-semibold text-slate-900 dark:text-white text-sm truncate">{chat.otherUser?.display_name || chat.otherUser?.full_name}</span>
                     {chat.last_message_at && <span className="text-[10px] text-slate-400 shrink-0">{timeAgo(chat.last_message_at)}</span>}
                   </div>
-                  <p className="text-xs text-slate-500 truncate">{chat.last_message || 'Нет сообщений'}</p>
+                  <p className="text-xs text-slate-500 truncate">{chat.last_message || t('chat.noMessages')}</p>
                 </div>
               </button>
             ))
@@ -245,7 +249,7 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
               <Avatar src={activeChat.otherUser?.avatar_url ?? undefined} name={activeChat.otherUser?.display_name || activeChat.otherUser?.email} size={40} />
               <div>
                 <div className="font-semibold text-slate-900 dark:text-white">{activeChat.otherUser?.display_name || activeChat.otherUser?.full_name}</div>
-                <div className="text-xs text-slate-500">{activeChat.otherUser?.is_online ? 'В сети' : `был(а) ${timeAgo(activeChat.otherUser?.last_seen || '')}`}</div>
+                <div className="text-xs text-slate-500">{activeChat.otherUser?.is_online ? t('chat.online') : `${t('chat.wasOnline')} ${timeAgo(activeChat.otherUser?.last_seen || '')}`}</div>
               </div>
             </div>
 
@@ -253,7 +257,7 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
               {loadingMessages ? (
                 <div className="flex justify-center"><Spinner className="w-6 h-6 text-brand-600" /></div>
               ) : messages.length === 0 ? (
-                <div className="text-center text-slate-500 py-8 text-sm">Начните разговор. Отправьте первое сообщение!</div>
+                <div className="text-center text-slate-500 py-8 text-sm">{t('chat.startConversation')}</div>
               ) : (
                 messages.map(msg => {
                   const isOwn = msg.sender_id === profile?.id;
@@ -285,7 +289,7 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                  placeholder="Напишите сообщение..."
+                  placeholder={t('chat.messagePlaceholder')}
                   className="input flex-1"
                 />
                 <button onClick={handleSend} disabled={!newMessage.trim() || sending} className="btn-primary !p-2.5">
@@ -296,7 +300,7 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <EmptyState icon={MessageSquare} title="Выберите чат" description="Выберите беседу из списка слева" />
+            <EmptyState icon={MessageSquare} title={t('chat.selectChat.title')} description={t('chat.selectChat.description')} />
           </div>
         )}
       </div>
@@ -305,21 +309,21 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={() => { setShowNewChat(false); setIdError(null); setIdInput(''); }}>
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
           <div className="relative w-full max-w-md card p-6 animate-scale-in" onClick={e => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Написать по ID</h2>
-            <p className="text-sm text-slate-500 mb-4">Введите ID пользователя, чтобы начать чат. ID можно найти в профиле.</p>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{t('chat.byId.title')}</h2>
+            <p className="text-sm text-slate-500 mb-4">{t('chat.byId.description')}</p>
             <div className="flex gap-2 mb-3">
               <input
                 type="text"
                 value={idInput}
                 onChange={e => { setIdInput(e.target.value.toUpperCase()); setIdError(null); }}
                 onKeyDown={e => e.key === 'Enter' && startChatById()}
-                placeholder="Например: A1B2C3D4"
+                placeholder={t('chat.byId.placeholder')}
                 className="input font-mono"
                 autoFocus
               />
               <button onClick={startChatById} disabled={idLoading || !idInput.trim()} className="btn-primary shrink-0">
                 {idLoading ? <Spinner className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
-                Чат
+                {t('chat.byId.button')}
               </button>
             </div>
             {idError && (
@@ -328,10 +332,10 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
               </div>
             )}
             <div className="flex items-center gap-2 mt-3 text-xs text-slate-400">
-              <span>Ваш ID:</span>
+              <span>{t('chat.byId.yourId')}</span>
               <code className="font-mono font-semibold text-brand-600 dark:text-brand-400">{profile?.public_id}</code>
             </div>
-            <button onClick={() => { setShowNewChat(false); setIdError(null); setIdInput(''); }} className="btn-secondary w-full mt-4">Отмена</button>
+            <button onClick={() => { setShowNewChat(false); setIdError(null); setIdInput(''); }} className="btn-secondary w-full mt-4">{t('chat.cancel')}</button>
           </div>
         </div>
       )}
