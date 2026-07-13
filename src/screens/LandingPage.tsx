@@ -49,7 +49,7 @@ const DEFAULT_STEPS = [
 
 const DEFAULT_HERO = {
   title: 'Найдите эксперта или станьте им',
-  subtitle: 'SkillBridge соединяет фрилансеров и заказчиков в Центральной Азии. Услуги, тендеры, мессенджер и аналитика — всё в одной платформе.',
+  subtitle: 'Nexwork соединяет фрилансеров и заказчиков в Центральной Азии. Услуги, тендеры, мессенджер и аналитика — всё в одной платформе.',
 };
 
 function getIcon(name: string): React.ElementType {
@@ -139,7 +139,7 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
                   <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <span className="text-xl font-extrabold text-slate-900 dark:text-white">SkillBridge</span>
+              <span className="text-xl font-extrabold text-slate-900 dark:text-white">Nexwork</span>
             </div>
 
             <nav className="hidden md:flex items-center gap-1">
@@ -264,7 +264,7 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
       <section id="features" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">Почему SkillBridge?</h2>
+            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">Почему Nexwork?</h2>
             <p className="mt-2 text-slate-600 dark:text-slate-400">Инструменты, которые делают фриланс проще</p>
           </div>
 
@@ -327,7 +327,7 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
                 Готовы начать?
               </h2>
               <p className="text-brand-100 text-lg mb-8 max-w-2xl mx-auto">
-                Присоединяйтесь к 12,500+ фрилансерам и заказчикам на SkillBridge
+                Присоединяйтесь к 12,500+ фрилансерам и заказчикам на Nexwork
               </p>
               <button onClick={() => openAuth('signup')} className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-brand-700 font-bold rounded-xl hover:bg-brand-50 transition-all duration-200 active:scale-95 shadow-lg">
                 Создать аккаунт
@@ -348,7 +348,7 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
                   <path d="M12 2L3 7v6c0 5 4 9 9 10 5-1 9-5 9-10V7l-9-5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <span className="font-bold text-slate-900 dark:text-white">SkillBridge</span>
+              <span className="font-bold text-slate-900 dark:text-white">Nexwork</span>
               <span className="text-sm text-slate-400">© 2026</span>
             </div>
             <div className="flex gap-6 text-sm text-slate-500 dark:text-slate-400">

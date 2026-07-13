@@ -50,7 +50,7 @@ export function PremiumScreen() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-warning-400 to-warning-600 mb-4">
           <Crown className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">SkillBridge Premium</h1>
+        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">Nexwork Premium</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-xl mx-auto">
           Откройте все возможности платформы и выйдите на новый уровень
         </p>
