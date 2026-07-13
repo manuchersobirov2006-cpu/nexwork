@@ -197,25 +197,25 @@ export function PassportScreen() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* About & Info */}
         <div className="card p-6 animate-slide-up">
-          <h3 className="font-bold text-slate-900 dark:text-white mb-4">Информация</h3>
+          <h3 className="font-bold text-slate-900 dark:text-white mb-4">{t('passport.info')}</h3>
           {editing ? (
             <div className="space-y-3">
               <div>
-                <label className="label">О себе</label>
-                <textarea value={editData.bio} onChange={e => setEditData({ ...editData, bio: e.target.value })} rows={3} className="input" placeholder="Расскажите о себе..." />
+                <label className="label">{t('passport.about')}</label>
+                <textarea value={editData.bio} onChange={e => setEditData({ ...editData, bio: e.target.value })} rows={3} className="input" placeholder={t('passport.about.placeholder')} />
               </div>
               <div>
-                <label className="label">Местоположение</label>
-                <input type="text" value={editData.location} onChange={e => setEditData({ ...editData, location: e.target.value })} className="input" placeholder="Город, страна" />
+                <label className="label">{t('passport.location')}</label>
+                <input type="text" value={editData.location} onChange={e => setEditData({ ...editData, location: e.target.value })} className="input" placeholder={t('passport.location.placeholder')} />
               </div>
               <div>
-                <label className="label">Телефон</label>
+                <label className="label">{t('passport.phone')}</label>
                 <input type="tel" value={editData.phone} onChange={e => setEditData({ ...editData, phone: e.target.value })} className="input" placeholder="+998..." />
               </div>
               <div>
-                <label className="label">Навыки</label>
+                <label className="label">{t('passport.skills')}</label>
                 <div className="flex gap-2 mb-2">
-                  <input type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSkill())} className="input" placeholder="Добавить навык" />
+                  <input type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSkill())} className="input" placeholder={t('passport.skills.add')} />
                   <button onClick={addSkill} className="btn-secondary">+</button>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -223,9 +223,9 @@ export function PassportScreen() {
                 </div>
               </div>
               <div>
-                <label className="label">Языки</label>
+                <label className="label">{t('passport.languages')}</label>
                 <div className="flex gap-2 mb-2">
-                  <input type="text" value={langInput} onChange={e => setLangInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addLang())} className="input" placeholder="Добавить язык" />
+                  <input type="text" value={langInput} onChange={e => setLangInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addLang())} className="input" placeholder={t('passport.languages.add')} />
                   <button onClick={addLang} className="btn-secondary">+</button>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -236,19 +236,19 @@ export function PassportScreen() {
           ) : (
             <div className="space-y-3">
               {profile.bio && <div><p className="text-sm text-slate-600 dark:text-slate-400">{profile.bio}</p></div>}
-              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><MapPin className="w-4 h-4 text-slate-400" />{profile.location || 'Не указано'}</div>
+              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><MapPin className="w-4 h-4 text-slate-400" />{profile.location || t('passport.notSpecified')}</div>
               <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><Mail className="w-4 h-4 text-slate-400" />{profile.email}</div>
-              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><Phone className="w-4 h-4 text-slate-400" />{profile.phone || 'Не указано'}</div>
-              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><Clock className="w-4 h-4 text-slate-400" />Регистрация: {formatDate(profile.created_at)}</div>
+              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><Phone className="w-4 h-4 text-slate-400" />{profile.phone || t('passport.notSpecified')}</div>
+              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><Clock className="w-4 h-4 text-slate-400" />{t('passport.registration')}: {formatDate(profile.created_at)}</div>
               {profile.skills.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Навыки</p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('passport.skills')}</p>
                   <div className="flex flex-wrap gap-2">{profile.skills.map(s => <Badge key={s} color="blue">{s}</Badge>)}</div>
                 </div>
               )}
               {profile.languages.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Языки</p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('passport.languages')}</p>
                   <div className="flex flex-wrap gap-2">{profile.languages.map(l => <Badge key={l} color="cyan"><Globe className="w-3 h-3" />{l}</Badge>)}</div>
                 </div>
               )}
@@ -259,7 +259,7 @@ export function PassportScreen() {
         {/* Verification */}
         <div className="card p-6 animate-slide-up">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-slate-900 dark:text-white">Верификация</h3>
+            <h3 className="font-bold text-slate-900 dark:text-white">{t('passport.verification')}</h3>
             <Badge color={verificationPercent === 100 ? 'green' : 'amber'}>{Math.round(verificationPercent)}%</Badge>
           </div>
           <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full mb-4">
@@ -286,23 +286,23 @@ export function PassportScreen() {
                     <div className="text-sm font-medium text-slate-900 dark:text-white">{step.label}</div>
                     <div className="text-xs text-slate-500">{step.description}</div>
                     {step.key === 'identity' && identityPending && (
-                      <div className="text-xs text-warning-600 flex items-center gap-1 mt-1"><Hourglass className="w-3 h-3" /> На рассмотрении</div>
+                      <div className="text-xs text-warning-600 flex items-center gap-1 mt-1"><Hourglass className="w-3 h-3" /> {t('passport.underReview')}</div>
                     )}
                     {step.key === 'identity' && identityRejected && identityVerif?.rejection_reason && (
-                      <div className="text-xs text-error-600 flex items-center gap-1 mt-1"><XCircle className="w-3 h-3" /> Отклонено: {identityVerif.rejection_reason}</div>
+                      <div className="text-xs text-error-600 flex items-center gap-1 mt-1"><XCircle className="w-3 h-3" /> {t('passport.rejected')}: {identityVerif.rejection_reason}</div>
                     )}
                   </div>
                   {!done && step.key === 'phone' && (
-                    <button onClick={() => setShowPhoneModal(true)} className="btn-ghost text-xs">Подтвердить</button>
+                    <button onClick={() => setShowPhoneModal(true)} className="btn-ghost text-xs">{t('passport.verify')}</button>
                   )}
                   {!done && step.key === 'identity' && !identityPending && (
-                    <button onClick={() => setShowIdentityModal(true)} className="btn-ghost text-xs">Подтвердить</button>
+                    <button onClick={() => setShowIdentityModal(true)} className="btn-ghost text-xs">{t('passport.verify')}</button>
                   )}
                   {!done && step.key === 'identity' && identityPending && (
-                    <Badge color="amber"><Hourglass className="w-3 h-3" /> Ожидает</Badge>
+                    <Badge color="amber"><Hourglass className="w-3 h-3" /> {t('passport.pending')}</Badge>
                   )}
                   {!done && step.key !== 'phone' && step.key !== 'identity' && (
-                    <button className="btn-ghost text-xs">Подтвердить</button>
+                    <button className="btn-ghost text-xs">{t('passport.verify')}</button>
                   )}
                 </div>
               );
@@ -314,7 +314,7 @@ export function PassportScreen() {
       {/* Reviews */}
       {reviews.length > 0 && (
         <div className="card p-6 mt-6 animate-slide-up">
-          <h3 className="font-bold text-slate-900 dark:text-white mb-4">Последние отзывы</h3>
+          <h3 className="font-bold text-slate-900 dark:text-white mb-4">{t('passport.recentReviews')}</h3>
           <div className="space-y-3">
             {reviews.map(r => (
               <div key={r.id} className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
