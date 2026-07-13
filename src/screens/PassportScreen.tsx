@@ -5,6 +5,7 @@ import { formatDate } from '../lib/format';
 import { Avatar, Badge, Stars, Spinner } from '../components/ui';
 import { AvatarUpload } from '../components/AvatarUpload';
 import { IdentityVerificationModal } from '../components/IdentityVerificationModal';
+import { PortfolioSection } from '../components/PortfolioSection';
 import { useTheme } from '../lib/theme';
 import { t } from '../lib/i18n';
 import type { Gig, Review, IdentityVerification } from '../lib/types';
@@ -307,6 +308,9 @@ export function PassportScreen() {
           </div>
         </div>
       </div>
+
+      {/* Portfolio */}
+      <PortfolioSection userId={profile.id} />
 
       {/* Reviews */}
       {reviews.length > 0 && (

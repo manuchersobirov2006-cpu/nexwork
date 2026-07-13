@@ -6,10 +6,10 @@ import { formatPrice, timeAgo, daysUntil } from '../lib/format';
 import { Avatar, Badge, Modal, EmptyState, SkeletonCard, Spinner, Stars } from '../components/ui';
 import { useTheme } from '../lib/theme';
 import { t } from '../lib/i18n';
-import type { Project, Bid, Profile } from '../lib/types';
+import type { Project, Bid, Profile, PortfolioItem } from '../lib/types';
 import {
   Plus, Clock, DollarSign, Users, Gavel,
-  Check, MessageSquare, Calendar
+  Check, MessageSquare, Calendar, ExternalLink, Briefcase
 } from 'lucide-react';
 
 export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => void }) {
@@ -178,6 +178,9 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
   const [bidDays, setBidDays] = useState(project.duration_days ?? 7);
   const [bidMessage, setBidMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [myPortfolio, setMyPortfolio] = useState<PortfolioItem[]>([]);
+  const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<string[]>([]);
+  const [portfolioById, setPortfolioById] = useState<Record<string, PortfolioItem>>({});
   const employer = project.employer as unknown as Profile | undefined;
   const isOwner = profile?.id === project.employer_id;
   const { language } = useTheme();
@@ -188,11 +191,30 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
       .select('*, freelancer:freelancer_id(*)')
       .eq('project_id', project.id)
       .order('created_at', { ascending: false });
-    if (data) setBids(data as Bid[]);
+    if (data) {
+      const bidsData = data as Bid[];
+      setBids(bidsData);
+      const ids = Array.from(new Set(bidsData.flatMap(b => b.portfolio_item_ids || [])));
+      if (ids.length > 0) {
+        const { data: items } = await supabase.from('portfolio_items').select('*').in('id', ids);
+        if (items) setPortfolioById(Object.fromEntries((items as PortfolioItem[]).map(i => [i.id, i])));
+      }
+    }
     setLoadingBids(false);
   }, [project.id]);
 
   useEffect(() => { loadBids(); }, [loadBids]);
+
+  useEffect(() => {
+    if (!profile || isOwner) return;
+    supabase.from('portfolio_items').select('*').eq('user_id', profile.id).order('created_at', { ascending: false }).then(({ data }) => {
+      if (data) setMyPortfolio(data as PortfolioItem[]);
+    });
+  }, [profile, isOwner]);
+
+  const togglePortfolioItem = (id: string) => {
+    setSelectedPortfolioIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
 
   const handleBid = async () => {
     if (!profile) return;
@@ -203,6 +225,7 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
       bid_amount: bidAmount,
       delivery_days: bidDays,
       message: bidMessage,
+      portfolio_item_ids: selectedPortfolioIds,
     });
     if (!error) {
       await supabase.from('projects').update({ bids_count: (project.bids_count ?? 0) + 1 }).eq('id', project.id);
@@ -299,24 +322,54 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
             <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
               {bids.map(bid => {
                 const freelancer = bid.freelancer as unknown as Profile | undefined;
+                const attached = (bid.portfolio_item_ids || []).map(id => portfolioById[id]).filter(Boolean);
                 return (
-                  <div key={bid.id} className="card p-3 flex items-center gap-3">
-                    <Avatar src={freelancer?.avatar_url ?? undefined} name={freelancer?.display_name || freelancer?.email} size={36} />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-slate-900 dark:text-white text-sm truncate">{freelancer?.display_name || freelancer?.full_name}</div>
-                      {freelancer?.rating != null && freelancer?.rating > 0 && <div className="flex items-center gap-1"><Stars rating={freelancer.rating} size={10} /><span className="text-xs text-slate-500">{freelancer.rating}</span></div>}
-                      {bid.message && <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{bid.message}</p>}
+                  <div key={bid.id} className="card p-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar src={freelancer?.avatar_url ?? undefined} name={freelancer?.display_name || freelancer?.email} size={36} />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-slate-900 dark:text-white text-sm truncate">{freelancer?.display_name || freelancer?.full_name}</div>
+                        {freelancer?.rating != null && freelancer?.rating > 0 && <div className="flex items-center gap-1"><Stars rating={freelancer.rating} size={10} /><span className="text-xs text-slate-500">{freelancer.rating}</span></div>}
+                        {bid.message && <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{bid.message}</p>}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-bold text-brand-600 dark:text-brand-400">{formatPrice(bid.bid_amount)}</div>
+                        <div className="text-xs text-slate-500">{bid.delivery_days} {t('board.days')}</div>
+                      </div>
+                      {isOwner && bid.status === 'pending' && (
+                        <button onClick={() => handleAcceptBid(bid)} className="btn-primary !px-3 !py-1.5 text-xs">{t('board.accept')}</button>
+                      )}
+                      {bid.status === 'accepted' && <Badge color="green"><Check className="w-3 h-3" /> {t('board.accepted')}</Badge>}
+                      {!isOwner && profile?.id !== bid.freelancer_id && (
+                        <button onClick={() => startChat(bid.freelancer_id)} className="btn-ghost !p-2"><MessageSquare className="w-4 h-4" /></button>
+                      )}
                     </div>
-                    <div className="text-right shrink-0">
-                      <div className="font-bold text-brand-600 dark:text-brand-400">{formatPrice(bid.bid_amount)}</div>
-                      <div className="text-xs text-slate-500">{bid.delivery_days} {t('board.days')}</div>
-                    </div>
-                    {isOwner && bid.status === 'pending' && (
-                      <button onClick={() => handleAcceptBid(bid)} className="btn-primary !px-3 !py-1.5 text-xs">{t('board.accept')}</button>
-                    )}
-                    {bid.status === 'accepted' && <Badge color="green"><Check className="w-3 h-3" /> {t('board.accepted')}</Badge>}
-                    {!isOwner && profile?.id !== bid.freelancer_id && (
-                      <button onClick={() => startChat(bid.freelancer_id)} className="btn-ghost !p-2"><MessageSquare className="w-4 h-4" /></button>
+                    {attached.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div className="text-[11px] text-slate-400 mb-1.5 flex items-center gap-1"><Briefcase className="w-3 h-3" /> {t('portfolio.attached')}</div>
+                        <div className="flex gap-2 overflow-x-auto scrollbar-thin">
+                          {attached.map(p => (
+                            <a
+                              key={p.id}
+                              href={p.link_url || undefined}
+                              target={p.link_url ? '_blank' : undefined}
+                              rel="noopener noreferrer"
+                              className={`shrink-0 w-16 ${p.link_url ? 'cursor-pointer' : 'cursor-default'}`}
+                              title={p.title}
+                            >
+                              <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative">
+                                {p.image_urls[0] ? (
+                                  <img src={p.image_urls[0]} alt={p.title} className="w-full h-full object-cover" />
+                                ) : (
+                                  <Briefcase className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                                )}
+                                {p.link_url && <ExternalLink className="w-3 h-3 text-white absolute bottom-1 right-1 drop-shadow" />}
+                              </div>
+                              <div className="text-[10px] text-slate-500 truncate mt-0.5">{p.title}</div>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
                 );
@@ -349,6 +402,40 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
                   <label className="label">{t('board.coverLetter')}</label>
                   <textarea value={bidMessage} onChange={e => setBidMessage(e.target.value)} rows={3} placeholder={t('board.coverLetter.placeholder')} className="input" />
                 </div>
+                {myPortfolio.length > 0 && (
+                  <div>
+                    <label className="label">{t('portfolio.attach')}</label>
+                    <p className="text-xs text-slate-400 mb-2">{t('portfolio.attach.hint')}</p>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      {myPortfolio.map(p => {
+                        const selected = selectedPortfolioIds.includes(p.id);
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => togglePortfolioItem(p.id)}
+                            className={`relative rounded-lg overflow-hidden border-2 transition-all ${selected ? 'border-brand-500' : 'border-slate-200 dark:border-slate-700'}`}
+                            style={{ aspectRatio: '1' }}
+                          >
+                            {p.image_urls[0] ? (
+                              <img src={p.image_urls[0]} alt={p.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+                                <Briefcase className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                              </div>
+                            )}
+                            {selected && (
+                              <div className="absolute inset-0 bg-brand-600/40 flex items-center justify-center">
+                                <Check className="w-5 h-5 text-white" />
+                              </div>
+                            )}
+                            <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] px-1 py-0.5 truncate">{p.title}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <button onClick={() => setShowBidForm(false)} className="btn-secondary flex-1">{t('board.cancel')}</button>
                   <button onClick={handleBid} disabled={submitting} className="btn-primary flex-1">

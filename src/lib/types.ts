@@ -104,8 +104,21 @@ export interface Bid {
   delivery_days: number;
   message: string | null;
   status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+  portfolio_item_ids: string[];
   created_at: string;
   freelancer?: Profile;
+}
+
+export interface PortfolioItem {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  image_urls: string[];
+  link_url: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface JobApplication {
