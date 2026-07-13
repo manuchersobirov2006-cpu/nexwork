@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { Modal, Spinner } from './ui';
+import { t } from '../lib/i18n';
 import { Phone, KeyRound, CheckCircle, AlertCircle } from 'lucide-react';
 
 export function PhoneVerificationModal({ open, onClose, onVerified }: {
@@ -33,7 +34,7 @@ export function PhoneVerificationModal({ open, onClose, onVerified }: {
     setError(null);
     const normalized = normalizePhone(phone);
     if (!isValidPhone(phone)) {
-      setError('Неверный формат телефона. Пример: +998 90 123 45 67');
+      setError(t('phone.invalidFormat'));
       return;
     }
 
@@ -46,11 +47,11 @@ export function PhoneVerificationModal({ open, onClose, onVerified }: {
 
     if (otpError) {
       if (otpError.message.includes('not enabled') || otpError.message.includes('provider')) {
-        setError('SMS-сервис не настроен. Обратитесь к администратору.');
+        setError(t('phone.smsNotConfigured'));
       } else if (otpError.message.includes('rate')) {
-        setError('Слишком много попыток. Подождите немного.');
+        setError(t('phone.tooManyAttempts'));
       } else {
-        setError('Ошибка отправки SMS: ' + otpError.message);
+        setError(t('phone.sendError') + ' ' + otpError.message);
       }
       return;
     }
@@ -61,7 +62,7 @@ export function PhoneVerificationModal({ open, onClose, onVerified }: {
   const handleVerifyCode = async () => {
     setError(null);
     if (code.length < 6) {
-      setError('Введите код из SMS (6 цифр)');
+      setError(t('phone.enterCode'));
       return;
     }
 
@@ -75,11 +76,11 @@ export function PhoneVerificationModal({ open, onClose, onVerified }: {
 
     if (verifyError) {
       if (verifyError.message.includes('expired')) {
-        setError('Срок действия кода истёк. Запросите новый.');
+        setError(t('phone.codeExpired'));
       } else if (verifyError.message.includes('invalid') || verifyError.message.includes('Token')) {
-        setError('Неверный код. Проверьте и попробуйте снова.');
+        setError(t('phone.invalidCode'));
       } else {
-        setError('Ошибка проверки: ' + verifyError.message);
+        setError(t('phone.verifyError') + ' ' + verifyError.message);
       }
       return;
     }
@@ -102,16 +103,16 @@ export function PhoneVerificationModal({ open, onClose, onVerified }: {
   };
 
   return (
-    <Modal open={open} onClose={handleClose} size="sm" title="Подтверждение телефона">
+    <Modal open={open} onClose={handleClose} size="sm" title={t('phone.title')}>
       <div className="p-6">
         {step === 'phone' && (
           <div className="space-y-4">
             <div className="flex items-center gap-3 p-3 bg-brand-50 dark:bg-brand-900/20 rounded-xl">
               <Phone className="w-5 h-5 text-brand-600 shrink-0" />
-              <p className="text-sm text-slate-700 dark:text-slate-300">Введите номер телефона. На него придёт код подтверждения по SMS.</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300">{t('phone.intro')}</p>
             </div>
             <div>
-              <label className="label">Номер телефона</label>
+              <label className="label">{t('phone.number')}</label>
               <input
                 type="tel"
                 value={phone}
@@ -124,7 +125,7 @@ export function PhoneVerificationModal({ open, onClose, onVerified }: {
             {error && <div className="px-4 py-3 bg-error-50 dark:bg-error-900/20 text-error-700 text-sm rounded-xl flex items-center gap-2"><AlertCircle className="w-4 h-4 shrink-0" /> {error}</div>}
             <button onClick={handleSendCode} disabled={loading || !phone} className="btn-primary w-full">
               {loading ? <Spinner className="w-4 h-4" /> : <Phone className="w-4 h-4" />}
-              Отправить код
+              {t('phone.sendCode')}
             </button>
           </div>
         )}
@@ -133,10 +134,10 @@ export function PhoneVerificationModal({ open, onClose, onVerified }: {
           <div className="space-y-4">
             <div className="flex items-center gap-3 p-3 bg-success-50 dark:bg-success-900/20 rounded-xl">
               <CheckCircle className="w-5 h-5 text-success-600 shrink-0" />
-              <p className="text-sm text-slate-700 dark:text-slate-300">Код отправлен на {normalizePhone(phone)}</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300">{t('phone.codeSentTo')} {normalizePhone(phone)}</p>
             </div>
             <div>
-              <label className="label">Код из SMS</label>
+              <label className="label">{t('phone.smsCode')}</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -149,14 +150,14 @@ export function PhoneVerificationModal({ open, onClose, onVerified }: {
             </div>
             {error && <div className="px-4 py-3 bg-error-50 dark:bg-error-900/20 text-error-700 text-sm rounded-xl flex items-center gap-2"><AlertCircle className="w-4 h-4 shrink-0" /> {error}</div>}
             <div className="flex gap-2">
-              <button onClick={() => setStep('phone')} className="btn-secondary flex-1">Назад</button>
+              <button onClick={() => setStep('phone')} className="btn-secondary flex-1">{t('phone.back')}</button>
               <button onClick={handleVerifyCode} disabled={loading || code.length < 6} className="btn-primary flex-1">
                 {loading ? <Spinner className="w-4 h-4" /> : <KeyRound className="w-4 h-4" />}
-                Подтвердить
+                {t('phone.verify')}
               </button>
             </div>
             <button onClick={handleSendCode} disabled={loading} className="text-sm text-brand-600 hover:text-brand-700 w-full text-center">
-              Отправить код повторно
+              {t('phone.resend')}
             </button>
           </div>
         )}

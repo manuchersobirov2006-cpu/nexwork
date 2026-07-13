@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { getAvatarUrl } from '../lib/constants';
 import { Spinner } from './ui';
+import { t } from '../lib/i18n';
 import { Camera, AlertCircle } from 'lucide-react';
 
 export function AvatarUpload({ size = 96, className = '' }: { size?: number; className?: string }) {
@@ -20,11 +21,11 @@ export function AvatarUpload({ size = 96, className = '' }: { size?: number; cla
     setError(null);
 
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setError('Только JPG, PNG или WebP');
+      setError(t('avatar.onlyFormats'));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setError('Максимальный размер — 5 МБ');
+      setError(t('avatar.maxSize'));
       return;
     }
 
@@ -48,7 +49,7 @@ export function AvatarUpload({ size = 96, className = '' }: { size?: number; cla
       await updateProfile({ avatar_url: avatarUrl });
       await refreshProfile();
     } catch (err) {
-      setError('Ошибка загрузки. Попробуйте снова.');
+      setError(t('avatar.uploadError'));
       console.error('Avatar upload error:', err);
     } finally {
       setUploading(false);
