@@ -121,20 +121,20 @@ export const PRIORITY_LABELS: Record<string, { ru: string; uz: string; en: strin
   urgent: { ru: 'Срочный', uz: 'Shoshilinch', en: 'Urgent', color: 'red' },
 };
 
-export const JOB_TYPE_LABELS: Record<string, string> = {
-  full_time: 'Полная занятость',
-  part_time: 'Частичная занятость',
-  contract: 'Контракт',
-  internship: 'Стажировка',
-  remote: 'Удалённо',
+export const JOB_TYPE_LABELS: Record<string, { ru: string; uz: string; en: string }> = {
+  full_time: { ru: 'Полная занятость', uz: 'Toʻliq stavka', en: 'Full-time' },
+  part_time: { ru: 'Частичная занятость', uz: 'Yarim stavka', en: 'Part-time' },
+  contract: { ru: 'Контракт', uz: 'Shartnoma', en: 'Contract' },
+  internship: { ru: 'Стажировка', uz: 'Amaliyot', en: 'Internship' },
+  remote: { ru: 'Удалённо', uz: 'Masofaviy', en: 'Remote' },
 };
 
 export const COMPANY_SIZES = [
-  { key: '1-10', label: '1 — 10 человек' },
-  { key: '11-50', label: '11 — 50 человек' },
-  { key: '51-200', label: '51 — 200 человек' },
-  { key: '201-500', label: '201 — 500 человек' },
-  { key: '500+', label: '500+ человек' },
+  { key: '1-10', label: '1 — 10 человек', labelUz: '1 — 10 kishi', labelEn: '1 — 10 people' },
+  { key: '11-50', label: '11 — 50 человек', labelUz: '11 — 50 kishi', labelEn: '11 — 50 people' },
+  { key: '51-200', label: '51 — 200 человек', labelUz: '51 — 200 kishi', labelEn: '51 — 200 people' },
+  { key: '201-500', label: '201 — 500 человек', labelUz: '201 — 500 kishi', labelEn: '201 — 500 people' },
+  { key: '500+', label: '500+ человек', labelUz: '500+ kishi', labelEn: '500+ people' },
 ];
 
 export const pexelsImage = (id: number, w = 600, h = 400) =>

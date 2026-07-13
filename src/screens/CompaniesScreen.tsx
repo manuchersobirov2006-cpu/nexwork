@@ -4,6 +4,8 @@ import { useAuth } from '../lib/auth';
 import { CATEGORIES, COMPANY_SIZES, JOB_TYPE_LABELS, pexelsImage } from '../lib/constants';
 import { formatPrice, timeAgo } from '../lib/format';
 import { Avatar, Badge, Modal, EmptyState, SkeletonCard, Spinner } from '../components/ui';
+import { useTheme } from '../lib/theme';
+import { t } from '../lib/i18n';
 import type { Company, Job, JobApplication, Profile } from '../lib/types';
 import {
   Building2, Plus, MapPin, Globe, Users, Search,
@@ -19,6 +21,9 @@ type Tab = 'jobs' | 'companies' | 'applicants';
 
 export function CompaniesScreen() {
   const { profile } = useAuth();
+  const { language } = useTheme();
+  const jobTypeLabel = (key: string) => { const v = JOB_TYPE_LABELS[key]; if (!v) return key; return language === 'en' ? v.en : language === 'uz' ? v.uz : v.ru; };
+  const catLabel = (key: string) => { const c = CATEGORIES.find(c => c.key === key); if (!c) return key; return language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label; };
   const [tab, setTab] = useState<Tab>('jobs');
   const [jobs, setJobs] = useState<Job[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -52,15 +57,15 @@ export function CompaniesScreen() {
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Компании и вакансии</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Найдите работу или компанию</p>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">{t('companies.title')}</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{t('companies.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowCreateJob(true)} className="btn-primary">
-            <Plus className="w-4 h-4" /> Вакансия
+            <Plus className="w-4 h-4" /> {t('companies.jobBtn')}
           </button>
           <button onClick={() => setShowCreateCompany(true)} className="btn-secondary">
-            <Plus className="w-4 h-4" /> Компания
+            <Plus className="w-4 h-4" /> {t('companies.companyBtn')}
           </button>
         </div>
       </div>
@@ -68,14 +73,14 @@ export function CompaniesScreen() {
       {/* Tabs */}
       <div className="flex gap-1 mb-4 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
         <button onClick={() => setTab('jobs')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'jobs' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'}`}>
-          <Briefcase className="w-4 h-4 inline mr-1.5" /> Вакансии
+          <Briefcase className="w-4 h-4 inline mr-1.5" /> {t('companies.tab.jobs')}
         </button>
         <button onClick={() => setTab('companies')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'companies' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'}`}>
-          <Building2 className="w-4 h-4 inline mr-1.5" /> Компании
+          <Building2 className="w-4 h-4 inline mr-1.5" /> {t('companies.tab.companies')}
         </button>
         {profile?.role === 'employer' && (
           <button onClick={() => setTab('applicants')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'applicants' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'}`}>
-            <UserCheck className="w-4 h-4 inline mr-1.5" /> Отклики
+            <UserCheck className="w-4 h-4 inline mr-1.5" /> {t('companies.tab.applicants')}
           </button>
         )}
       </div>
@@ -85,12 +90,12 @@ export function CompaniesScreen() {
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={tab === 'jobs' ? 'Поиск вакансий...' : 'Поиск компаний...'} className="input pl-10" />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={tab === 'jobs' ? t('companies.searchJobs') : t('companies.searchCompanies')} className="input pl-10" />
           </div>
           {tab === 'jobs' && (
             <select value={category} onChange={e => setCategory(e.target.value)} className="input sm:w-48">
-              <option value="all">Все категории</option>
-              {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+              <option value="all">{t('companies.allCategories')}</option>
+              {CATEGORIES.map(c => <option key={c.key} value={c.key}>{catLabel(c.key)}</option>)}
             </select>
           )}
         </div>
@@ -103,7 +108,7 @@ export function CompaniesScreen() {
         </div>
       ) : tab === 'jobs' ? (
         jobs.length === 0 ? (
-          <EmptyState icon={Briefcase} title="Нет вакансий" description="Опубликуйте вакансию или измените фильтры" />
+          <EmptyState icon={Briefcase} title={t('companies.noJobs.title')} description={t('companies.noJobs.description')} />
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">
             {jobs.map((job, i) => {
@@ -117,12 +122,12 @@ export function CompaniesScreen() {
                       <h3 className="font-bold text-slate-900 dark:text-white line-clamp-1">{job.title}</h3>
                       <p className="text-sm text-slate-500">{employer?.display_name || employer?.full_name}</p>
                     </div>
-                    {job.is_remote && <Badge color="cyan">Удалённо</Badge>}
+                    {job.is_remote && <Badge color="cyan">{t('companies.remote')}</Badge>}
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">{job.description}</p>
                   <div className="flex items-center gap-3 flex-wrap text-xs text-slate-500 mb-3">
                     {job.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job.location}</span>}
-                    <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{JOB_TYPE_LABELS[job.job_type]}</span>
+                    <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{jobTypeLabel(job.job_type)}</span>
                     {(job.salary_min || job.salary_max) && (
                       <span className="flex items-center gap-1 font-medium text-success-600">
                         {job.salary_min && job.salary_max ? `${formatPrice(job.salary_min)}—${formatPrice(job.salary_max)}` : formatPrice(job.salary_min || job.salary_max || 0)}
@@ -143,7 +148,7 @@ export function CompaniesScreen() {
         )
       ) : (
         companies.length === 0 ? (
-          <EmptyState icon={Building2} title="Нет компаний" description="Создайте профиль компании" />
+          <EmptyState icon={Building2} title={t('companies.noCompanies.title')} description={t('companies.noCompanies.description')} />
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {companies.map((company, i) => {
@@ -157,7 +162,7 @@ export function CompaniesScreen() {
                         {company.name}
                         {company.is_verified && <Check className="w-4 h-4 text-brand-500" />}
                       </h3>
-                      <p className="text-sm text-slate-500">{company.industry || 'Компания'}</p>
+                      <p className="text-sm text-slate-500">{company.industry || t('companies.company')}</p>
                     </div>
                   </div>
                   {company.description && <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">{company.description}</p>}
@@ -210,8 +215,8 @@ function ApplicantsView() {
     if (app?.applicant_id) {
       await supabase.from('notifications').insert({
         user_id: app.applicant_id, type: 'job',
-        title: status === 'accepted' ? 'Вы приняты!' : 'Отклик отклонён',
-        body: `Статус отклика на «${app.job?.title || 'вакансию'}»: ${status === 'accepted' ? 'Принят' : 'Отклонён'}`,
+        title: status === 'accepted' ? t('companies.youAccepted.title') : t('companies.youRejected.title'),
+        body: `${t('companies.applicationStatus')} «${app.job?.title || t('companies.vacancy')}»: ${status === 'accepted' ? t('companies.status.accepted') : t('companies.status.rejected')}`,
       });
     }
     load();
@@ -226,14 +231,14 @@ function ApplicantsView() {
       <div className="flex gap-2 mb-4">
         {(['all', 'pending', 'accepted', 'rejected'] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-sm ${filter === f ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'}`}>
-            {f === 'all' ? 'Все' : f === 'pending' ? 'Ожидают' : f === 'accepted' ? 'Принятые' : 'Отклонённые'}
+            {f === 'all' ? t('companies.filter.all') : f === 'pending' ? t('companies.filter.pending') : f === 'accepted' ? t('companies.filter.accepted') : t('companies.filter.rejected')}
             {f !== 'all' && <span className="ml-1 text-xs opacity-70">({applications.filter(a => a.status === f).length})</span>}
           </button>
         ))}
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState icon={UserCheck} title="Нет откликов" description="Отклики на ваши вакансии будут появляться здесь" />
+        <EmptyState icon={UserCheck} title={t('companies.noApplicants.title')} description={t('companies.noApplicants.description')} />
       ) : (
         <div className="space-y-3">
           {filtered.map(app => (
@@ -241,17 +246,17 @@ function ApplicantsView() {
               <Avatar src={app.applicant?.avatar_url ?? undefined} name={app.applicant?.display_name || app.applicant?.email} size={40} />
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-slate-900 dark:text-white truncate">{app.applicant?.display_name || app.applicant?.full_name}</div>
-                <div className="text-xs text-slate-500 truncate">Отклик на: {app.job?.title}</div>
+                <div className="text-xs text-slate-500 truncate">{t('companies.appliedTo')} {app.job?.title}</div>
                 {app.cover_letter && <div className="text-xs text-slate-400 mt-1 line-clamp-2">{app.cover_letter}</div>}
                 <div className="text-[10px] text-slate-400 mt-0.5">{timeAgo(app.created_at)}</div>
               </div>
               <Badge color={app.status === 'pending' ? 'amber' : app.status === 'accepted' ? 'green' : app.status === 'rejected' ? 'red' : 'slate'}>
-                {app.status === 'pending' ? 'Ожидает' : app.status === 'accepted' ? 'Принят' : app.status === 'rejected' ? 'Отклонён' : 'Отозван'}
+                {app.status === 'pending' ? t('companies.status.pending') : app.status === 'accepted' ? t('companies.status.accepted') : app.status === 'rejected' ? t('companies.status.rejected') : t('companies.status.withdrawn')}
               </Badge>
               {app.status === 'pending' && (
                 <div className="flex gap-1">
-                  <button onClick={() => handleStatusChange(app.id, 'accepted')} className="btn-ghost !p-1.5 text-success-600" title="Принять"><Check className="w-4 h-4" /></button>
-                  <button onClick={() => handleStatusChange(app.id, 'rejected')} className="btn-ghost !p-1.5 text-error-600" title="Отклонить"><X className="w-4 h-4" /></button>
+                  <button onClick={() => handleStatusChange(app.id, 'accepted')} className="btn-ghost !p-1.5 text-success-600" title={t('companies.accept')}><Check className="w-4 h-4" /></button>
+                  <button onClick={() => handleStatusChange(app.id, 'rejected')} className="btn-ghost !p-1.5 text-error-600" title={t('companies.reject')}><X className="w-4 h-4" /></button>
                 </div>
               )}
             </div>
@@ -296,7 +301,7 @@ function JobDetailModal({ job, onClose, onApplied }: { job: Job; onClose: () => 
 
     if (insertError) {
       if (insertError.code === '23505') {
-        setError('Вы уже откликнулись на эту вакансию');
+        setError(t('companies.alreadyApplied'));
         setApplied(true);
       } else {
         setError(insertError.message);
@@ -306,8 +311,8 @@ function JobDetailModal({ job, onClose, onApplied }: { job: Job; onClose: () => 
       setExistingApp(data as JobApplication);
       await supabase.from('notifications').insert({
         user_id: job.employer_id, type: 'job',
-        title: 'Новый отклик на вакансию',
-        body: `Отклик на «${job.title}»`,
+        title: t('companies.newApplication.title'),
+        body: `${t('companies.newApplication.body')} «${job.title}»`,
         link: 'applicants',
       });
       await supabase.from('jobs').update({ applicants_count: job.applicants_count + 1 }).eq('id', job.id);
@@ -331,6 +336,8 @@ function JobDetailModal({ job, onClose, onApplied }: { job: Job; onClose: () => 
   };
 
   const isOwnJob = profile?.id === job.employer_id;
+  const { language } = useTheme();
+  const jobTypeLabel = (key: string) => { const v = JOB_TYPE_LABELS[key]; if (!v) return key; return language === 'en' ? v.en : language === 'uz' ? v.uz : v.ru; };
 
   return (
     <Modal open onClose={onClose} size="lg" title={job.title}>
@@ -343,16 +350,16 @@ function JobDetailModal({ job, onClose, onApplied }: { job: Job; onClose: () => 
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-          {job.location && <div className="card p-3 text-center"><MapPin className="w-5 h-5 text-brand-600 mx-auto mb-1" /><div className="text-xs text-slate-500">Локация</div><div className="font-bold text-slate-900 dark:text-white text-sm">{job.location}</div></div>}
-          <div className="card p-3 text-center"><Briefcase className="w-5 h-5 text-brand-600 mx-auto mb-1" /><div className="text-xs text-slate-500">Тип</div><div className="font-bold text-slate-900 dark:text-white text-sm">{JOB_TYPE_LABELS[job.job_type]}</div></div>
-          {(job.salary_min || job.salary_max) && <div className="card p-3 text-center"><span className="block text-success-600 font-bold text-sm mb-0.5">$</span><div className="text-xs text-slate-500">Зарплата</div><div className="font-bold text-slate-900 dark:text-white text-sm">{job.salary_min && job.salary_max ? `${formatPrice(job.salary_min)}—${formatPrice(job.salary_max)}` : formatPrice(job.salary_min || job.salary_max || 0)}</div></div>}
-          <div className="card p-3 text-center"><Eye className="w-5 h-5 text-brand-600 mx-auto mb-1" /><div className="text-xs text-slate-500">Просмотров</div><div className="font-bold text-slate-900 dark:text-white text-sm">{job.views}</div></div>
+          {job.location && <div className="card p-3 text-center"><MapPin className="w-5 h-5 text-brand-600 mx-auto mb-1" /><div className="text-xs text-slate-500">{t('companies.location')}</div><div className="font-bold text-slate-900 dark:text-white text-sm">{job.location}</div></div>}
+          <div className="card p-3 text-center"><Briefcase className="w-5 h-5 text-brand-600 mx-auto mb-1" /><div className="text-xs text-slate-500">{t('companies.type')}</div><div className="font-bold text-slate-900 dark:text-white text-sm">{jobTypeLabel(job.job_type)}</div></div>
+          {(job.salary_min || job.salary_max) && <div className="card p-3 text-center"><span className="block text-success-600 font-bold text-sm mb-0.5">$</span><div className="text-xs text-slate-500">{t('companies.salary')}</div><div className="font-bold text-slate-900 dark:text-white text-sm">{job.salary_min && job.salary_max ? `${formatPrice(job.salary_min)}—${formatPrice(job.salary_max)}` : formatPrice(job.salary_min || job.salary_max || 0)}</div></div>}
+          <div className="card p-3 text-center"><Eye className="w-5 h-5 text-brand-600 mx-auto mb-1" /><div className="text-xs text-slate-500">{t('companies.views')}</div><div className="font-bold text-slate-900 dark:text-white text-sm">{job.views}</div></div>
         </div>
-        <h4 className="font-semibold text-slate-900 dark:text-white mb-2">Описание</h4>
+        <h4 className="font-semibold text-slate-900 dark:text-white mb-2">{t('companies.description')}</h4>
         <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap mb-4">{job.description}</p>
         {job.skills_required.length > 0 && (
           <div className="mb-4">
-            <h4 className="font-semibold text-slate-900 dark:text-white mb-2">Требуемые навыки</h4>
+            <h4 className="font-semibold text-slate-900 dark:text-white mb-2">{t('companies.requiredSkills')}</h4>
             <div className="flex flex-wrap gap-2">{job.skills_required.map(s => <Badge key={s} color="slate">{s}</Badge>)}</div>
           </div>
         )}
@@ -360,8 +367,8 @@ function JobDetailModal({ job, onClose, onApplied }: { job: Job; onClose: () => 
         {!isOwnJob && !applied && (
           <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
             <div>
-              <label className="label">Сопроводительное письмо (необязательно)</label>
-              <textarea value={coverLetter} onChange={e => setCoverLetter(e.target.value)} rows={4} placeholder="Расскажите, почему вы подходите на эту позицию..." className="input" />
+              <label className="label">{t('companies.coverLetter')}</label>
+              <textarea value={coverLetter} onChange={e => setCoverLetter(e.target.value)} rows={4} placeholder={t('companies.coverLetter.placeholder')} className="input" />
             </div>
             {error && (
               <div className="px-3 py-2 bg-error-50 dark:bg-error-900/20 text-error-700 text-sm rounded-xl flex items-center gap-2">
@@ -370,7 +377,7 @@ function JobDetailModal({ job, onClose, onApplied }: { job: Job; onClose: () => 
             )}
             <button onClick={handleApply} disabled={applying} className="btn-primary w-full">
               {applying ? <Spinner className="w-4 h-4" /> : <Send className="w-4 h-4" />}
-              Откликнуться
+              {t('companies.apply')}
             </button>
           </div>
         )}
@@ -380,10 +387,10 @@ function JobDetailModal({ job, onClose, onApplied }: { job: Job; onClose: () => 
             <div className="px-4 py-3 bg-success-50 dark:bg-success-900/20 rounded-xl flex items-center gap-3">
               <Check className="w-5 h-5 text-success-600" />
               <div className="flex-1">
-                <div className="font-medium text-success-700 dark:text-success-300">Вы откликнулись на эту вакансию</div>
-                <div className="text-xs text-slate-500">Статус: {existingApp?.status === 'pending' ? 'На рассмотрении' : existingApp?.status}</div>
+                <div className="font-medium text-success-700 dark:text-success-300">{t('companies.appliedToJob')}</div>
+                <div className="text-xs text-slate-500">{t('companies.status')}: {existingApp?.status === 'pending' ? t('companies.underReview') : existingApp?.status}</div>
               </div>
-              <button onClick={handleWithdraw} disabled={applying} className="btn-secondary !py-1.5 text-xs">Отозвать</button>
+              <button onClick={handleWithdraw} disabled={applying} className="btn-secondary !py-1.5 text-xs">{t('companies.withdraw')}</button>
             </div>
           </div>
         )}
@@ -392,7 +399,7 @@ function JobDetailModal({ job, onClose, onApplied }: { job: Job; onClose: () => 
           <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
             <div className="px-4 py-3 bg-brand-50 dark:bg-brand-900/20 rounded-xl flex items-center gap-3">
               <Briefcase className="w-5 h-5 text-brand-600" />
-              <span className="text-sm text-slate-600 dark:text-slate-400">Это ваша вакансия. Отклики можно посмотреть в разделе «Отклики».</span>
+              <span className="text-sm text-slate-600 dark:text-slate-400">{t('companies.ownJobNotice')}</span>
             </div>
           </div>
         )}
@@ -416,6 +423,7 @@ function CreateJobModal({ onClose, onCreated }: { onClose: () => void; onCreated
   const [saving, setSaving] = useState(false);
 
   const addSkill = () => { const s = skillInput.trim(); if (s && !skills.includes(s)) setSkills([...skills, s]); setSkillInput(''); };
+  const { language } = useTheme();
 
   const handleCreate = async () => {
     if (!profile || !title || !description) return;
@@ -433,30 +441,30 @@ function CreateJobModal({ onClose, onCreated }: { onClose: () => void; onCreated
   };
 
   return (
-    <Modal open onClose={onClose} size="lg" title="Новая вакансия">
+    <Modal open onClose={onClose} size="lg" title={t('companies.newJob')}>
       <div className="p-6 space-y-4">
-        <div><label className="label">Должность</label><input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Например: Senior React Developer" className="input" /></div>
-        <div><label className="label">Описание</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder="Опишите требования и обязанности..." className="input" /></div>
+        <div><label className="label">{t('companies.position')}</label><input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder={t('companies.position.placeholder')} className="input" /></div>
+        <div><label className="label">{t('companies.description')}</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder={t('companies.jobDescription.placeholder')} className="input" /></div>
         <div className="grid grid-cols-2 gap-3">
-          <div><label className="label">Категория</label><select value={category} onChange={e => setCategory(e.target.value)} className="input">{CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}</select></div>
-          <div><label className="label">Тип занятости</label><select value={jobType} onChange={e => setJobType(e.target.value)} className="input">{Object.entries(JOB_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+          <div><label className="label">{t('companies.category')}</label><select value={category} onChange={e => setCategory(e.target.value)} className="input">{CATEGORIES.map(c => <option key={c.key} value={c.key}>{language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label}</option>)}</select></div>
+          <div><label className="label">{t('companies.employmentType')}</label><select value={jobType} onChange={e => setJobType(e.target.value)} className="input">{Object.entries(JOB_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{language === 'en' ? v.en : language === 'uz' ? v.uz : v.ru}</option>)}</select></div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div><label className="label">Зарплата от ($)</label><input type="number" value={salaryMin} onChange={e => setSalaryMin(Number(e.target.value))} className="input" /></div>
-          <div><label className="label">Зарплата до ($)</label><input type="number" value={salaryMax} onChange={e => setSalaryMax(Number(e.target.value))} className="input" /></div>
+          <div><label className="label">{t('companies.salaryFrom')}</label><input type="number" value={salaryMin} onChange={e => setSalaryMin(Number(e.target.value))} className="input" /></div>
+          <div><label className="label">{t('companies.salaryTo')}</label><input type="number" value={salaryMax} onChange={e => setSalaryMax(Number(e.target.value))} className="input" /></div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div><label className="label">Локация</label><input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Город" className="input" /></div>
-          <div className="flex items-end"><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={isRemote} onChange={e => setIsRemote(e.target.checked)} className="w-4 h-4 rounded" /><span className="text-sm text-slate-700 dark:text-slate-300">Удалённая работа</span></label></div>
+          <div><label className="label">{t('companies.city')}</label><input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder={t('companies.city')} className="input" /></div>
+          <div className="flex items-end"><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={isRemote} onChange={e => setIsRemote(e.target.checked)} className="w-4 h-4 rounded" /><span className="text-sm text-slate-700 dark:text-slate-300">{t('companies.remoteWork')}</span></label></div>
         </div>
         <div>
-          <label className="label">Навыки</label>
+          <label className="label">{t('companies.skills')}</label>
           <div className="flex gap-2 mb-2"><input type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSkill())} className="input" /><button onClick={addSkill} className="btn-secondary">+</button></div>
           <div className="flex flex-wrap gap-2">{skills.map(s => <span key={s} className="badge bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">{s}<button onClick={() => setSkills(skills.filter(x => x !== s))} className="ml-1">×</button></span>)}</div>
         </div>
         <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
-          <button onClick={onClose} className="btn-secondary">Отмена</button>
-          <button onClick={handleCreate} disabled={saving || !title || !description} className="btn-primary">{saving && <Spinner className="w-4 h-4" />} Опубликовать</button>
+          <button onClick={onClose} className="btn-secondary">{t('companies.cancel')}</button>
+          <button onClick={handleCreate} disabled={saving || !title || !description} className="btn-primary">{saving && <Spinner className="w-4 h-4" />} {t('companies.publish')}</button>
         </div>
       </div>
     </Modal>
@@ -473,6 +481,8 @@ function CreateCompanyModal({ onClose, onCreated }: { onClose: () => void; onCre
   const [location, setLocation] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const { language } = useTheme();
+
   const handleCreate = async () => {
     if (!profile || !name) return;
     setSaving(true);
@@ -484,21 +494,21 @@ function CreateCompanyModal({ onClose, onCreated }: { onClose: () => void; onCre
   };
 
   return (
-    <Modal open onClose={onClose} size="md" title="Новая компания">
+    <Modal open onClose={onClose} size="md" title={t('companies.newCompany')}>
       <div className="p-6 space-y-4">
-        <div><label className="label">Название</label><input type="text" value={name} onChange={e => setName(e.target.value)} className="input" /></div>
-        <div><label className="label">Описание</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="input" /></div>
+        <div><label className="label">{t('companies.name')}</label><input type="text" value={name} onChange={e => setName(e.target.value)} className="input" /></div>
+        <div><label className="label">{t('companies.description')}</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="input" /></div>
         <div className="grid grid-cols-2 gap-3">
-          <div><label className="label">Отрасль</label><input type="text" value={industry} onChange={e => setIndustry(e.target.value)} className="input" /></div>
-          <div><label className="label">Размер</label><select value={size} onChange={e => setSize(e.target.value)} className="input">{COMPANY_SIZES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}</select></div>
+          <div><label className="label">{t('companies.industry')}</label><input type="text" value={industry} onChange={e => setIndustry(e.target.value)} className="input" /></div>
+          <div><label className="label">{t('companies.size')}</label><select value={size} onChange={e => setSize(e.target.value)} className="input">{COMPANY_SIZES.map(s => <option key={s.key} value={s.key}>{language === 'en' ? s.labelEn : language === 'uz' ? s.labelUz : s.label}</option>)}</select></div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div><label className="label">Сайт</label><input type="text" value={website} onChange={e => setWebsite(e.target.value)} placeholder="example.com" className="input" /></div>
-          <div><label className="label">Локация</label><input type="text" value={location} onChange={e => setLocation(e.target.value)} className="input" /></div>
+          <div><label className="label">{t('companies.website')}</label><input type="text" value={website} onChange={e => setWebsite(e.target.value)} placeholder="example.com" className="input" /></div>
+          <div><label className="label">{t('companies.location')}</label><input type="text" value={location} onChange={e => setLocation(e.target.value)} className="input" /></div>
         </div>
         <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
-          <button onClick={onClose} className="btn-secondary">Отмена</button>
-          <button onClick={handleCreate} disabled={saving || !name} className="btn-primary">{saving && <Spinner className="w-4 h-4" />} Создать</button>
+          <button onClick={onClose} className="btn-secondary">{t('companies.cancel')}</button>
+          <button onClick={handleCreate} disabled={saving || !name} className="btn-primary">{saving && <Spinner className="w-4 h-4" />} {t('companies.create')}</button>
         </div>
       </div>
     </Modal>
