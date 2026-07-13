@@ -42,7 +42,7 @@ export function AdminScreen() {
   if (!profile?.is_admin) {
     return (
       <div className="p-4 sm:p-6 lg:p-8">
-        <EmptyState icon={Shield} title="Доступ ограничен" description="Эта страница доступна только администраторам платформы SkillBridge." />
+        <EmptyState icon={Shield} title="Доступ ограничен" description="Эта страница доступна только администраторам платформы Nexwork." />
       </div>
     );
   }
@@ -66,7 +66,7 @@ export function AdminScreen() {
         </div>
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Админ-панель</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-0.5">Управление платформой SkillBridge</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-0.5">Управление платформой Nexwork</p>
         </div>
       </div>
 
