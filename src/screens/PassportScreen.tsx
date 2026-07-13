@@ -6,6 +6,8 @@ import { Avatar, Badge, Stars, Spinner } from '../components/ui';
 import { AvatarUpload } from '../components/AvatarUpload';
 import { PhoneVerificationModal } from '../components/PhoneVerificationModal';
 import { IdentityVerificationModal } from '../components/IdentityVerificationModal';
+import { useTheme } from '../lib/theme';
+import { t } from '../lib/i18n';
 import type { Gig, Review, IdentityVerification } from '../lib/types';
 import {
   ShieldCheck, Shield, Phone, Mail, MapPin, Globe, Award,
@@ -13,15 +15,20 @@ import {
   Briefcase, Zap, Hourglass, XCircle
 } from 'lucide-react';
 
-const VERIFICATION_STEPS = [
-  { key: 'phone', label: 'Телефон', icon: Phone, description: 'Подтвердите номер телефона' },
-  { key: 'identity', label: 'Личность', icon: ShieldCheck, description: 'Загрузите документ, удостоверяющий личность' },
-  { key: 'skills', label: 'Навыки', icon: Award, description: 'Пройдите тестирование по навыкам' },
-  { key: 'payment', label: 'Платёжные данные', icon: Briefcase, description: 'Привяжите счёт для вывода средств' },
-];
+function useVerificationSteps() {
+  return [
+    { key: 'phone', label: t('passport.step.phone.label'), icon: Phone, description: t('passport.step.phone.description') },
+    { key: 'identity', label: t('passport.step.identity.label'), icon: ShieldCheck, description: t('passport.step.identity.description') },
+    { key: 'skills', label: t('passport.step.skills.label'), icon: Award, description: t('passport.step.skills.description') },
+    { key: 'payment', label: t('passport.step.payment.label'), icon: Briefcase, description: t('passport.step.payment.description') },
+  ];
+}
 
 export function PassportScreen() {
   const { profile, updateProfile, refreshProfile } = useAuth();
+  const { language } = useTheme();
+  void language;
+  const VERIFICATION_STEPS = useVerificationSteps();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [gigs, setGigs] = useState<Gig[]>([]);
@@ -56,6 +63,19 @@ export function PassportScreen() {
 
   if (!profile) return null;
 
+  const startEditing = () => {
+    setEditData({
+      full_name: profile.full_name || '',
+      display_name: profile.display_name || '',
+      bio: profile.bio || '',
+      location: profile.location || '',
+      phone: profile.phone || '',
+      skills: profile.skills || [],
+      languages: profile.languages || [],
+    });
+    setEditing(true);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     await updateProfile(editData);
@@ -87,17 +107,17 @@ export function PassportScreen() {
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Цифровой паспорт</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Ваш профиль и верификация</p>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">{t('passport.title')}</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{t('passport.subtitle')}</p>
         </div>
         {!editing ? (
-          <button onClick={() => setEditing(true)} className="btn-secondary">
-            <Edit className="w-4 h-4" /> Редактировать
+          <button onClick={startEditing} className="btn-secondary">
+            <Edit className="w-4 h-4" /> {t('passport.edit')}
           </button>
         ) : (
           <div className="flex gap-2">
-            <button onClick={() => setEditing(false)} className="btn-secondary"><X className="w-4 h-4" /> Отмена</button>
-            <button onClick={handleSave} disabled={saving} className="btn-primary">{saving ? <Spinner className="w-4 h-4" /> : <Save className="w-4 h-4" />} Сохранить</button>
+            <button onClick={() => setEditing(false)} className="btn-secondary"><X className="w-4 h-4" /> {t('passport.cancel')}</button>
+            <button onClick={handleSave} disabled={saving} className="btn-primary">{saving ? <Spinner className="w-4 h-4" /> : <Save className="w-4 h-4" />} {t('passport.save')}</button>
           </div>
         )}
       </div>
@@ -120,12 +140,12 @@ export function PassportScreen() {
             <div className="flex-1 pt-2">
               {editing ? (
                 <div className="space-y-2">
-                  <input type="text" value={editData.display_name} onChange={e => setEditData({ ...editData, display_name: e.target.value })} placeholder="Отображаемое имя" className="input" />
-                  <input type="text" value={editData.full_name} onChange={e => setEditData({ ...editData, full_name: e.target.value })} placeholder="Полное имя" className="input" />
+                  <input type="text" value={editData.display_name} onChange={e => setEditData({ ...editData, display_name: e.target.value })} placeholder={t('passport.displayName')} className="input" />
+                  <input type="text" value={editData.full_name} onChange={e => setEditData({ ...editData, full_name: e.target.value })} placeholder={t('passport.fullName')} className="input" />
                 </div>
               ) : (
                 <>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">{profile.display_name || profile.full_name || 'Пользователь'}</h2>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">{profile.display_name || profile.full_name || t('passport.user')}</h2>
                   <p className="text-sm text-slate-500">{profile.email}</p>
                   {profile.public_id && (
                     <div className="flex items-center gap-2 mt-1.5">
@@ -134,17 +154,17 @@ export function PassportScreen() {
                       <button
                         onClick={() => navigator.clipboard?.writeText(profile.public_id)}
                         className="text-xs text-brand-600 hover:text-brand-700"
-                      >Копировать</button>
+                      >{t('passport.copy')}</button>
                     </div>
                   )}
                 </>
               )}
               <div className="flex items-center gap-2 mt-2">
                 <Badge color={profile.role === 'employer' ? 'purple' : 'blue'}>
-                  {profile.role === 'employer' ? 'Заказчик' : profile.role === 'admin' ? 'Админ' : 'Фрилансер'}
+                  {profile.role === 'employer' ? t('role.employer') : profile.role === 'admin' ? t('role.admin') : t('role.freelancer')}
                 </Badge>
-                {profile.is_premium && <Badge color="amber"><Zap className="w-3 h-3" /> Premium</Badge>}
-                {profile.is_verified && <Badge color="green"><Shield className="w-3 h-3" /> Проверен</Badge>}
+                {profile.is_premium && <Badge color="amber"><Zap className="w-3 h-3" /> {t('passport.premium')}</Badge>}
+                {profile.is_verified && <Badge color="green"><Shield className="w-3 h-3" /> {t('passport.verified')}</Badge>}
               </div>
             </div>
           </div>
@@ -153,22 +173,22 @@ export function PassportScreen() {
             <div className="text-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{profile.rating.toFixed(1)}</div>
               <Stars rating={profile.rating} size={12} />
-              <div className="text-xs text-slate-500 mt-1">{profile.review_count} отзывов</div>
+              <div className="text-xs text-slate-500 mt-1">{profile.review_count} {t('passport.reviews')}</div>
             </div>
             <div className="text-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{profile.completed_orders}</div>
               <CheckCircle className="w-4 h-4 text-success-600 mx-auto mt-1" />
-              <div className="text-xs text-slate-500 mt-1">Заказов выполнено</div>
+              <div className="text-xs text-slate-500 mt-1">{t('passport.ordersCompleted')}</div>
             </div>
             <div className="text-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{profile.response_rate}%</div>
               <TrendingUp className="w-4 h-4 text-brand-600 mx-auto mt-1" />
-              <div className="text-xs text-slate-500 mt-1">Откликов</div>
+              <div className="text-xs text-slate-500 mt-1">{t('passport.responses')}</div>
             </div>
             <div className="text-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{gigs.length}</div>
               <Briefcase className="w-4 h-4 text-accent-600 mx-auto mt-1" />
-              <div className="text-xs text-slate-500 mt-1">Активных услуг</div>
+              <div className="text-xs text-slate-500 mt-1">{t('passport.activeGigs')}</div>
             </div>
           </div>
         </div>
