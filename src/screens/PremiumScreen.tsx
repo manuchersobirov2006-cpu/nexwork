@@ -1,11 +1,11 @@
-import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { useTheme } from '../lib/theme';
-import { supabase } from '../lib/supabase';
 import { PREMIUM_PLANS } from '../lib/constants';
-import { Badge, Spinner } from '../components/ui';
+import { Badge } from '../components/ui';
 import { t } from '../lib/i18n';
 import { Crown, Check, Zap, TrendingUp, Shield, Star } from 'lucide-react';
+
+const NEXWORK_TG = 'https://t.me/nexwork_uz';
 
 function useBenefits() {
   return [
@@ -20,13 +20,10 @@ function useBenefits() {
 const LOCALE_MAP: Record<string, string> = { ru: 'ru-RU', uz: 'uz-UZ', en: 'en-US' };
 
 export function PremiumScreen() {
-  const { profile, updateProfile } = useAuth();
+  const { profile } = useAuth();
   const { language } = useTheme();
   const locale = LOCALE_MAP[language] || 'ru-RU';
   const BENEFITS = useBenefits();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [activating, setActivating] = useState(false);
-  const [activated, setActivated] = useState(false);
 
   if (!profile) return null;
 
@@ -34,26 +31,10 @@ export function PremiumScreen() {
   const planPeriod = (plan: typeof PREMIUM_PLANS[number]) => (language === 'en' ? plan.periodEn : language === 'uz' ? plan.periodUz : plan.period);
   const planFeatures = (plan: typeof PREMIUM_PLANS[number]) => (language === 'en' ? plan.featuresEn : language === 'uz' ? plan.featuresUz : plan.features);
 
-  const handleActivate = async () => {
-    if (!selectedPlan) return;
-    setActivating(true);
-    const plan = PREMIUM_PLANS.find(p => p.key === selectedPlan);
-    const until = new Date();
-    until.setMonth(until.getMonth() + 1);
-    await updateProfile({
-      is_premium: true,
-      premium_until: until.toISOString(),
-    });
-    await supabase.from('notifications').insert({
-      user_id: profile.id,
-      type: 'premium',
-      title: t('premium.notification.title'),
-      body: t('premium.notification.body').replace('{plan}', plan ? planName(plan) : ''),
-      link: 'premium',
-    });
-    setActivating(false);
-    setActivated(true);
-    setTimeout(() => setActivated(false), 3000);
+  const handleSelectPlan = (plan: typeof PREMIUM_PLANS[number]) => {
+    const message = `Здравствуйте! Хочу оформить тариф "${planName(plan)}" ($${plan.price}/${planPeriod(plan)}). Мой ID: ${profile.public_id}`;
+    const url = `${NEXWORK_TG}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const faq = [
@@ -79,18 +60,6 @@ export function PremiumScreen() {
           </div>
         )}
       </div>
-
-      {activated && (
-        <div className="card p-4 mb-6 bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-800 animate-scale-in">
-          <div className="flex items-center gap-3">
-            <Check className="w-6 h-6 text-success-600" />
-            <div>
-              <div className="font-bold text-success-700 dark:text-success-400">{t('premium.activated')}</div>
-              <div className="text-sm text-success-600 dark:text-success-500">{t('premium.enjoy')}</div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Plans */}
       <div className="grid md:grid-cols-3 gap-6 mb-12">
@@ -121,11 +90,10 @@ export function PremiumScreen() {
               ))}
             </ul>
             <button
-              onClick={() => { setSelectedPlan(plan.key); handleActivate(); }}
-              disabled={activating || profile.is_premium}
+              onClick={() => handleSelectPlan(plan)}
+              disabled={profile.is_premium}
               className={`w-full ${plan.popular ? 'btn-primary' : 'btn-secondary'} ${profile.is_premium ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {activating && selectedPlan === plan.key ? <Spinner className="w-4 h-4" /> : null}
               {profile.is_premium ? t('premium.active') : t('premium.select')}
             </button>
           </div>
