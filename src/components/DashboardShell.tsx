@@ -3,7 +3,7 @@ import { useAuth } from '../lib/auth';
 import { useTheme } from '../lib/theme';
 import { supabase } from '../lib/supabase';
 import { timeAgo, classNames } from '../lib/format';
-import { Avatar, Badge } from './ui';
+import { Avatar } from './ui';
 import { t } from '../lib/i18n';
 import type { Notification } from '../lib/types';
 import {
@@ -98,8 +98,6 @@ export function DashboardShell({
     await signOut();
   };
 
-  const totalBadge = unreadCount + (unreadChats > 0 ? 1 : 0);
-
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
       {/* Sidebar - desktop */}
@@ -122,7 +120,6 @@ export function DashboardShell({
         <nav className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-1">
           {NAV_ITEMS.filter(item => item.key !== 'admin' || profile?.is_admin).map(item => {
             const isActive = active === item.key;
-            const showDot = (item.key === 'chat' && unreadChats > 0) || (item.key === 'premium' && !profile?.is_premium);
             return (
               <button
                 key={item.key}
@@ -131,8 +128,12 @@ export function DashboardShell({
               >
                 <item.icon className="w-5 h-5 shrink-0" />
                 <span className="flex-1 text-left">{item.label}</span>
-                {showDot && <span className="w-2 h-2 rounded-full bg-error-500" />}
-                {item.key === 'premium' && <Crown className="w-3.5 h-3.5 text-warning-500" />}
+                {item.key === 'chat' && unreadChats > 0 && (
+                  <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-error-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {unreadChats > 99 ? '99+' : unreadChats}
+                  </span>
+                )}
+                {item.key === 'premium' && !profile?.is_premium && <Crown className="w-3.5 h-3.5 text-warning-500" />}
               </button>
             );
           })}
@@ -173,11 +174,11 @@ export function DashboardShell({
 
             {/* Notifications */}
             <div className="relative">
-              <button onClick={() => { setNotifOpen(!notifOpen); if (!notifOpen && unreadCount > 0) markAllRead(); }} className="btn-ghost !p-2 relative">
+              <button onClick={() => setNotifOpen(!notifOpen)} className="btn-ghost !p-2 relative">
                 <Bell className="w-5 h-5" />
-                {totalBadge > 0 && (
+                {unreadCount > 0 && (
                   <span className="absolute top-1 right-1 w-4 h-4 bg-error-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {totalBadge > 9 ? '9+' : totalBadge}
+                    {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </button>
@@ -188,7 +189,11 @@ export function DashboardShell({
                   <div className="absolute right-0 top-full mt-2 w-80 card shadow-card-hover z-40 animate-slide-down max-h-96 overflow-y-auto scrollbar-thin">
                     <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                       <span className="font-semibold text-slate-900 dark:text-white">{t('header.notifications')}</span>
-                      {unreadCount > 0 && <Badge color="red">{unreadCount} {t('header.new')}</Badge>}
+                      {unreadCount > 0 ? (
+                        <button onClick={markAllRead} className="text-xs text-brand-600 hover:text-brand-700 font-medium">{t('header.markAllRead')}</button>
+                      ) : (
+                        <span className="text-xs text-slate-400">{t('header.allRead')}</span>
+                      )}
                     </div>
                     {notifications.length === 0 ? (
                       <div className="p-8 text-center text-sm text-slate-500">{t('header.noNotifications')}</div>
