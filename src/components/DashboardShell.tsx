@@ -4,6 +4,7 @@ import { useTheme } from '../lib/theme';
 import { supabase } from '../lib/supabase';
 import { timeAgo, classNames } from '../lib/format';
 import { Avatar, Badge } from './ui';
+import { t } from '../lib/i18n';
 import type { Notification } from '../lib/types';
 import {
   Sun, Moon, Bell, Search, LogOut, Menu, X, Settings,
@@ -21,19 +22,21 @@ interface NavItem {
   icon: React.ElementType;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { key: 'dashboard', label: 'Обзор', icon: LayoutGrid },
-  { key: 'gigs', label: 'Услуги', icon: Home },
-  { key: 'board', label: 'Тендеры', icon: Gavel },
-  { key: 'chat', label: 'Сообщения', icon: MessageSquare },
-  { key: 'kanban', label: 'Доска задач', icon: KanbanSquare },
-  { key: 'passport', label: 'Цифровой паспорт', icon: ShieldCheck },
-  { key: 'analytics', label: 'Аналитика', icon: BarChart3 },
-  { key: 'companies', label: 'Компании и вакансии', icon: Building2 },
-  { key: 'premium', label: 'Premium', icon: Crown },
-  { key: 'settings', label: 'Настройки', icon: Settings },
-  { key: 'admin', label: 'Админ-панель', icon: Shield },
-];
+function useNavItems(): NavItem[] {
+  return [
+    { key: 'dashboard', label: t('nav.dashboard'), icon: LayoutGrid },
+    { key: 'gigs', label: t('nav.gigs'), icon: Home },
+    { key: 'board', label: t('nav.board'), icon: Gavel },
+    { key: 'chat', label: t('nav.chat'), icon: MessageSquare },
+    { key: 'kanban', label: t('nav.kanban'), icon: KanbanSquare },
+    { key: 'passport', label: t('nav.passport'), icon: ShieldCheck },
+    { key: 'analytics', label: t('nav.analytics'), icon: BarChart3 },
+    { key: 'companies', label: t('nav.companies'), icon: Building2 },
+    { key: 'premium', label: t('nav.premium'), icon: Crown },
+    { key: 'settings', label: t('nav.settings'), icon: Settings },
+    { key: 'admin', label: t('nav.admin'), icon: Shield },
+  ];
+}
 
 export function DashboardShell({
   active,
@@ -45,7 +48,9 @@ export function DashboardShell({
   children: ReactNode;
 }) {
   const { profile, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, language } = useTheme();
+  void language;
+  const NAV_ITEMS = useNavItems();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -139,7 +144,7 @@ export function DashboardShell({
         <div className="p-3 border-t border-slate-200 dark:border-slate-800">
           <button onClick={handleSignOut} className="nav-link w-full text-error-600 dark:text-error-400 hover:bg-error-50 dark:hover:bg-error-900/20">
             <LogOut className="w-5 h-5" />
-            <span>Выйти</span>
+            <span>{t('nav.logout')}</span>
           </button>
         </div>
       </aside>
@@ -158,7 +163,7 @@ export function DashboardShell({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Поиск..."
+                placeholder={t('nav.search')}
                 className="input-sm input pl-9 w-64"
               />
             </div>
@@ -185,11 +190,11 @@ export function DashboardShell({
                   <div className="fixed inset-0 z-30" onClick={() => setNotifOpen(false)} />
                   <div className="absolute right-0 top-full mt-2 w-80 card shadow-card-hover z-40 animate-slide-down max-h-96 overflow-y-auto scrollbar-thin">
                     <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                      <span className="font-semibold text-slate-900 dark:text-white">Уведомления</span>
-                      {unreadCount > 0 && <Badge color="red">{unreadCount} новых</Badge>}
+                      <span className="font-semibold text-slate-900 dark:text-white">{t('header.notifications')}</span>
+                      {unreadCount > 0 && <Badge color="red">{unreadCount} {t('header.new')}</Badge>}
                     </div>
                     {notifications.length === 0 ? (
-                      <div className="p-8 text-center text-sm text-slate-500">Нет уведомлений</div>
+                      <div className="p-8 text-center text-sm text-slate-500">{t('header.noNotifications')}</div>
                     ) : (
                       notifications.map(n => (
                         <div key={n.id} className={`p-3 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${!n.is_read ? 'bg-brand-50/50 dark:bg-brand-900/10' : ''}`}>
@@ -214,9 +219,9 @@ export function DashboardShell({
               <Avatar src={profile?.avatar_url ?? undefined} name={profile?.display_name || profile?.full_name || profile?.email} size={32} />
               <div className="hidden sm:block text-left">
                 <div className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
-                  {profile?.display_name || profile?.full_name || 'Пользователь'}
+                  {profile?.display_name || profile?.full_name || t('header.user')}
                 </div>
-                <div className="text-xs text-slate-500">{profile?.role === 'employer' ? 'Заказчик' : profile?.role === 'admin' ? 'Админ' : 'Фрилансер'}</div>
+                <div className="text-xs text-slate-500">{profile?.role === 'employer' ? t('role.employer') : profile?.role === 'admin' ? t('role.admin') : t('role.freelancer')}</div>
               </div>
               <ChevronDown className="w-4 h-4 text-slate-400 hidden sm:block" />
             </button>

@@ -1,14 +1,14 @@
 export const CATEGORIES = [
-  { key: 'design', label: 'Дизайн', labelEn: 'Design', icon: 'Palette' },
-  { key: 'development', label: 'Разработка', labelEn: 'Development', icon: 'Code' },
-  { key: 'marketing', label: 'Маркетинг', labelEn: 'Marketing', icon: 'Megaphone' },
-  { key: 'writing', label: 'Тексты и переводы', labelEn: 'Writing & Translation', icon: 'PenLine' },
-  { key: 'video', label: 'Видео и анимация', labelEn: 'Video & Animation', icon: 'Video' },
-  { key: 'music', label: 'Музыка и аудио', labelEn: 'Music & Audio', icon: 'Music' },
-  { key: 'business', label: 'Бизнес', labelEn: 'Business', icon: 'Briefcase' },
-  { key: 'ai', label: 'ИИ сервисы', labelEn: 'AI Services', icon: 'Sparkles' },
-  { key: 'data', label: 'Данные', labelEn: 'Data', icon: 'Database' },
-  { key: 'consulting', label: 'Консалтинг', labelEn: 'Consulting', icon: 'Lightbulb' },
+  { key: 'design', label: 'Дизайн', labelEn: 'Design', labelUz: 'Dizayn', icon: 'Palette' },
+  { key: 'development', label: 'Разработка', labelEn: 'Development', labelUz: 'Dasturlash', icon: 'Code' },
+  { key: 'marketing', label: 'Маркетинг', labelEn: 'Marketing', labelUz: 'Marketing', icon: 'Megaphone' },
+  { key: 'writing', label: 'Тексты и переводы', labelEn: 'Writing & Translation', labelUz: 'Matn va tarjima', icon: 'PenLine' },
+  { key: 'video', label: 'Видео и анимация', labelEn: 'Video & Animation', labelUz: 'Video va animatsiya', icon: 'Video' },
+  { key: 'music', label: 'Музыка и аудио', labelEn: 'Music & Audio', labelUz: 'Musiqa va audio', icon: 'Music' },
+  { key: 'business', label: 'Бизнес', labelEn: 'Business', labelUz: 'Biznes', icon: 'Briefcase' },
+  { key: 'ai', label: 'ИИ сервисы', labelEn: 'AI Services', labelUz: 'SI xizmatlari', icon: 'Sparkles' },
+  { key: 'data', label: 'Данные', labelEn: 'Data', labelUz: 'Maʼlumotlar', icon: 'Database' },
+  { key: 'consulting', label: 'Консалтинг', labelEn: 'Consulting', labelUz: 'Konsalting', icon: 'Lightbulb' },
 ];
 
 export const SKILLS_LIBRARY = [
@@ -88,7 +88,6 @@ export const PREMIUM_PLANS = [
 export const LANGUAGES = [
   { code: 'ru', label: 'Русский', flag: '🇷🇺' },
   { code: 'uz', label: 'O\'zbek', flag: '🇺🇿' },
-  { code: 'kz', label: 'Қазақша', flag: '🇰🇿' },
   { code: 'en', label: 'English', flag: '🇬🇧' },
 ];
 

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { AuthModal } from '../components/AuthModal';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { CATEGORIES } from '../lib/constants';
 import { useTheme } from '../lib/theme';
 import { supabase } from '../lib/supabase';
+import { t } from '../lib/i18n';
 import {
   Search, Sun, Moon, Menu, X, ArrowRight, Check, Star,
   Palette, Code, Megaphone, PenLine, Video, Music, Briefcase,
@@ -25,32 +27,40 @@ interface ContentRow {
   is_active: boolean;
 }
 
-const DEFAULT_STATS = [
-  { key: 'freelancers', label: 'Активных фрилансеров', value: '12,500+', icon: Users },
-  { key: 'orders', label: 'Завершённых заказов', value: '85,000+', icon: Check },
-  { key: 'countries', label: 'Стран', value: '15', icon: Globe },
-  { key: 'rating', label: 'Средняя оценка', value: '4.8', icon: Star },
-];
+function getDefaultStats() {
+  return [
+    { key: 'freelancers', label: t('landing.stat.freelancers'), value: '12,500+', icon: Users },
+    { key: 'orders', label: t('landing.stat.orders'), value: '85,000+', icon: Check },
+    { key: 'countries', label: t('landing.stat.countries'), value: '15', icon: Globe },
+    { key: 'rating', label: t('landing.stat.rating'), value: '4.8', icon: Star },
+  ];
+}
 
-const DEFAULT_FEATURES = [
-  { key: 'passport', icon: Shield, title: 'Цифровой паспорт', description: 'Верификация личности и навыков. Работайте с проверенными экспертами.' },
-  { key: 'instant', icon: Zap, title: 'Мгновенный старт', description: 'Закажите услугу или подайте заявку на тендер за пару кликов.' },
-  { key: 'analytics', icon: TrendingUp, title: 'Прозрачная аналитика', description: 'Отслеживайте доходы, заказы и эффективность в реальном времени.' },
-  { key: 'messenger', icon: MessageSquare, title: 'Встроенный мессенджер', description: 'Общайтесь с клиентами и исполнителями прямо на платформе.' },
-  { key: 'quality', icon: Award, title: 'Гарантия качества', description: 'Система отзывов и рейтингов защищает каждую сделку.' },
-  { key: 'localization', icon: Globe, title: 'Региональная локализация', description: 'Поддержка русского, узбекского, казахского и английского.' },
-];
+function getDefaultFeatures() {
+  return [
+    { key: 'passport', icon: Shield, title: t('landing.feature.passport.title'), description: t('landing.feature.passport.description') },
+    { key: 'instant', icon: Zap, title: t('landing.feature.instant.title'), description: t('landing.feature.instant.description') },
+    { key: 'analytics', icon: TrendingUp, title: t('landing.feature.analytics.title'), description: t('landing.feature.analytics.description') },
+    { key: 'messenger', icon: MessageSquare, title: t('landing.feature.messenger.title'), description: t('landing.feature.messenger.description') },
+    { key: 'quality', icon: Award, title: t('landing.feature.quality.title'), description: t('landing.feature.quality.description') },
+    { key: 'localization', icon: Globe, title: t('landing.feature.localization.title'), description: t('landing.feature.localization.description') },
+  ];
+}
 
-const DEFAULT_STEPS = [
-  { key: 'step1', num: '01', title: 'Создайте аккаунт', description: 'Выберите роль — фрилансер или заказчик — и заполните профиль.' },
-  { key: 'step2', num: '02', title: 'Найдите или опубликуйте', description: 'Ищите услуги в каталоге или публикуйте тендеры на свои проекты.' },
-  { key: 'step3', num: '03', title: 'Работайте и получайте', description: 'Общайтесь, выполняйте задачи и получайте оплату безопасно.' },
-];
+function getDefaultSteps() {
+  return [
+    { key: 'step1', num: '01', title: t('landing.step1.title'), description: t('landing.step1.description') },
+    { key: 'step2', num: '02', title: t('landing.step2.title'), description: t('landing.step2.description') },
+    { key: 'step3', num: '03', title: t('landing.step3.title'), description: t('landing.step3.description') },
+  ];
+}
 
-const DEFAULT_HERO = {
-  title: 'Найдите эксперта или станьте им',
-  subtitle: 'Nexwork соединяет фрилансеров и заказчиков в Центральной Азии. Услуги, тендеры, мессенджер и аналитика — всё в одной платформе.',
-};
+function getDefaultHero() {
+  return {
+    title: 'Найдите эксперта или станьте им',
+    subtitle: 'Nexwork соединяет фрилансеров и заказчиков в Центральной Азии. Услуги, тендеры, мессенджер и аналитика — всё в одной платформе.',
+  };
+}
 
 function getIcon(name: string): React.ElementType {
   return ICONS[name] || Briefcase;
@@ -60,16 +70,27 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, language } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [heroTitle, setHeroTitle] = useState(DEFAULT_HERO.title);
-  const [heroSubtitle, setHeroSubtitle] = useState(DEFAULT_HERO.subtitle);
-  const [stats, setStats] = useState(DEFAULT_STATS);
-  const [features, setFeatures] = useState(DEFAULT_FEATURES);
-  const [steps, setSteps] = useState(DEFAULT_STEPS);
+  const [heroTitle, setHeroTitle] = useState(getDefaultHero().title);
+  const [heroSubtitle, setHeroSubtitle] = useState(getDefaultHero().subtitle);
+  const [stats, setStats] = useState(getDefaultStats());
+  const [features, setFeatures] = useState(getDefaultFeatures());
+  const [steps, setSteps] = useState(getDefaultSteps());
 
+  // DB-authored content (platform_content) is Russian-only. For ru we show it
+  // as-is; for other languages we fall back to the translated defaults instead.
   useEffect(() => {
+    if (language !== 'ru') {
+      setHeroTitle(getDefaultHero().title);
+      setHeroSubtitle(getDefaultHero().subtitle);
+      setStats(getDefaultStats());
+      setFeatures(getDefaultFeatures());
+      setSteps(getDefaultSteps());
+      return;
+    }
+
     supabase
       .from('platform_content')
       .select('*')
@@ -98,10 +119,10 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
         const featureRows = rows.filter(r => r.section === 'feature');
         if (featureRows.length > 0) {
           setFeatures(featureRows.map(r => {
-            const defaultF = DEFAULT_FEATURES.find(f => f.key === r.key);
+            const defaultF = getDefaultFeatures().find(f => f.key === r.key);
             return {
               key: r.key,
-              icon: (defaultF?.icon || getIcon(r.key)) as typeof DEFAULT_FEATURES[number]['icon'],
+              icon: (defaultF?.icon || getIcon(r.key)) as ReturnType<typeof getDefaultFeatures>[number]['icon'],
               title: r.title,
               description: r.description || '',
             };
@@ -118,7 +139,7 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
           })));
         }
       });
-  }, []);
+  }, [language]);
 
   const openAuth = (mode: 'signin' | 'signup') => {
     setAuthMode(mode);
@@ -143,21 +164,22 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
             </div>
 
             <nav className="hidden md:flex items-center gap-1">
-              <a href="#features" className="btn-ghost">Возможности</a>
-              <a href="#how" className="btn-ghost">Как это работает</a>
-              <a href="#categories" className="btn-ghost">Категории</a>
+              <a href="#features" className="btn-ghost">{t('landing.nav.features')}</a>
+              <a href="#how" className="btn-ghost">{t('landing.nav.how')}</a>
+              <a href="#categories" className="btn-ghost">{t('landing.nav.categories')}</a>
               {onNavigateDashboard && (
-                <button onClick={onNavigateDashboard} className="btn-ghost">Кабинет</button>
+                <button onClick={onNavigateDashboard} className="btn-ghost">{t('nav.cabinet')}</button>
               )}
             </nav>
 
             <div className="flex items-center gap-2">
+              <LanguageSwitcher />
               <button onClick={toggleTheme} className="btn-ghost !p-2" aria-label="Toggle theme">
                 {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
               </button>
-              <button onClick={() => openAuth('signin')} className="btn-ghost hidden sm:inline-flex">Войти</button>
+              <button onClick={() => openAuth('signin')} className="btn-ghost hidden sm:inline-flex">{t('landing.nav.signin')}</button>
               <button onClick={() => openAuth('signup')} className="btn-primary !px-4 !py-2 text-sm">
-                Начать
+                {t('landing.nav.start')}
               </button>
               <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="btn-ghost md:hidden !p-2">
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -167,10 +189,10 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
 
           {mobileMenuOpen && (
             <div className="md:hidden pb-4 space-y-1 animate-slide-down">
-              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="btn-ghost w-full justify-start">Возможности</a>
-              <a href="#how" onClick={() => setMobileMenuOpen(false)} className="btn-ghost w-full justify-start">Как это работает</a>
-              <a href="#categories" onClick={() => setMobileMenuOpen(false)} className="btn-ghost w-full justify-start">Категории</a>
-              <button onClick={() => openAuth('signin')} className="btn-ghost w-full justify-start">Войти</button>
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="btn-ghost w-full justify-start">{t('landing.nav.features')}</a>
+              <a href="#how" onClick={() => setMobileMenuOpen(false)} className="btn-ghost w-full justify-start">{t('landing.nav.how')}</a>
+              <a href="#categories" onClick={() => setMobileMenuOpen(false)} className="btn-ghost w-full justify-start">{t('landing.nav.categories')}</a>
+              <button onClick={() => openAuth('signin')} className="btn-ghost w-full justify-start">{t('landing.nav.signin')}</button>
             </div>
           )}
         </div>
@@ -185,7 +207,7 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 rounded-full text-sm font-medium mb-6 animate-slide-down">
             <Sparkles className="w-4 h-4" />
-            Маркетплейс фриланс-услуг нового поколения
+            {t('landing.hero.badge')}
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 dark:text-white leading-tight max-w-4xl mx-auto animate-slide-up">
@@ -205,13 +227,13 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Что вам нужно сделать?"
+                  placeholder={t('landing.hero.search')}
                   className="w-full pl-12 pr-4 py-3 bg-transparent text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
                 />
               </div>
               <button onClick={() => openAuth('signup')} className="btn-primary !py-3">
                 <Search className="w-4 h-4" />
-                Найти
+                {t('landing.hero.find')}
               </button>
             </div>
           </div>
@@ -235,8 +257,8 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
       <section id="categories" className="py-20 bg-slate-50 dark:bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">Категории услуг</h2>
-            <p className="mt-2 text-slate-600 dark:text-slate-400">Выберите сферу — от дизайна до разработки</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">{t('landing.categories.title')}</h2>
+            <p className="mt-2 text-slate-600 dark:text-slate-400">{t('landing.categories.subtitle')}</p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -252,7 +274,7 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
                   <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 mb-3 group-hover:scale-110 transition-transform">
                     <Icon className="w-6 h-6" />
                   </div>
-                  <div className="font-semibold text-slate-900 dark:text-white text-sm">{cat.label}</div>
+                  <div className="font-semibold text-slate-900 dark:text-white text-sm">{language === 'en' ? cat.labelEn : language === 'uz' ? cat.labelUz : cat.label}</div>
                 </button>
               );
             })}
@@ -264,8 +286,8 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
       <section id="features" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">Почему Nexwork?</h2>
-            <p className="mt-2 text-slate-600 dark:text-slate-400">Инструменты, которые делают фриланс проще</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">{t('landing.features.title')}</h2>
+            <p className="mt-2 text-slate-600 dark:text-slate-400">{t('landing.features.subtitle')}</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -290,8 +312,8 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
       <section id="how" className="py-20 bg-slate-50 dark:bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">Как это работает</h2>
-            <p className="mt-2 text-slate-600 dark:text-slate-400">Три простых шага до результата</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">{t('landing.how.title')}</h2>
+            <p className="mt-2 text-slate-600 dark:text-slate-400">{t('landing.how.subtitle')}</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -309,7 +331,7 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
 
           <div className="text-center mt-12">
             <button onClick={() => openAuth('signup')} className="btn-primary text-base !px-8 !py-3.5">
-              Начать бесплатно
+              {t('landing.how.cta')}
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>
@@ -324,13 +346,13 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-500/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
             <div className="relative">
               <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-                Готовы начать?
+                {t('landing.cta.title')}
               </h2>
               <p className="text-brand-100 text-lg mb-8 max-w-2xl mx-auto">
-                Присоединяйтесь к 12,500+ фрилансерам и заказчикам на Nexwork
+                {t('landing.cta.subtitle')}
               </p>
               <button onClick={() => openAuth('signup')} className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-brand-700 font-bold rounded-xl hover:bg-brand-50 transition-all duration-200 active:scale-95 shadow-lg">
-                Создать аккаунт
+                {t('landing.cta.button')}
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
@@ -352,10 +374,10 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
               <span className="text-sm text-slate-400">© 2026</span>
             </div>
             <div className="flex gap-6 text-sm text-slate-500 dark:text-slate-400">
-              <a href="#" className="hover:text-brand-600">О нас</a>
-              <a href="#" className="hover:text-brand-600">Условия</a>
-              <a href="#" className="hover:text-brand-600">Конфиденциальность</a>
-              <a href="#" className="hover:text-brand-600">Поддержка</a>
+              <a href="#" className="hover:text-brand-600">{t('landing.footer.about')}</a>
+              <a href="#" className="hover:text-brand-600">{t('landing.footer.terms')}</a>
+              <a href="#" className="hover:text-brand-600">{t('landing.footer.privacy')}</a>
+              <a href="#" className="hover:text-brand-600">{t('landing.footer.support')}</a>
             </div>
           </div>
         </div>

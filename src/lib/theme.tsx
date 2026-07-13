@@ -22,8 +22,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const [language, setLang] = useState<Language>(() => {
     const saved = localStorage.getItem('skillbridge_lang') as Language | null;
-    return saved ?? 'ru';
+    return saved === 'ru' || saved === 'uz' || saved === 'en' ? saved : 'ru';
   });
+
+  // Keep the i18n module's current language in sync synchronously during
+  // render (not in an effect) so that children reading t() during their own
+  // render or mount effects never see a stale language — effects run
+  // child-before-parent, so a useEffect here would race with LandingPage's.
+  setI18nLanguage(language);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -36,7 +42,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   useEffect(() => {
-    setI18nLanguage(language);
     localStorage.setItem('skillbridge_lang', language);
   }, [language]);
 
