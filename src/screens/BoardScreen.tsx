@@ -6,6 +6,7 @@ import { formatPrice, timeAgo, daysUntil } from '../lib/format';
 import { Avatar, Badge, Modal, EmptyState, SkeletonCard, Spinner, Stars } from '../components/ui';
 import { useTheme } from '../lib/theme';
 import { t } from '../lib/i18n';
+import { sendBidMessage, acceptBid as acceptBidHelper } from '../lib/bids';
 import type { Project, Bid, Profile, PortfolioItem } from '../lib/types';
 import {
   Plus, Clock, DollarSign, Users, Gavel,
@@ -219,23 +220,35 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
   const handleBid = async () => {
     if (!profile) return;
     setSubmitting(true);
-    const { error } = await supabase.from('bids').insert({
+    const { data: newBid, error } = await supabase.from('bids').insert({
       project_id: project.id,
       freelancer_id: profile.id,
       bid_amount: bidAmount,
       delivery_days: bidDays,
       message: bidMessage,
       portfolio_item_ids: selectedPortfolioIds,
-    });
-    if (!error) {
+    }).select('id').single();
+    if (!error && newBid) {
       await supabase.from('projects').update({ bids_count: (project.bids_count ?? 0) + 1 }).eq('id', project.id);
       await supabase.from('notifications').insert({
         user_id: project.employer_id,
         type: 'bid',
         title: t('board.newBid.title'),
         body: `${t('board.newBid.body')} "${project.title}" — ${formatPrice(bidAmount)}`,
-        link: 'board',
+        link: 'chat',
       });
+      await sendBidMessage(
+        {
+          bid_id: newBid.id,
+          project_id: project.id,
+          project_title: project.title,
+          employer_id: project.employer_id,
+          freelancer_id: profile.id,
+          bid_amount: bidAmount,
+          delivery_days: bidDays,
+        },
+        `${t('board.newBid.body')} "${project.title}" — ${formatPrice(bidAmount)}`
+      );
     }
     setSubmitting(false);
     setShowBidForm(false);
@@ -244,16 +257,7 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
   };
 
   const handleAcceptBid = async (bid: Bid) => {
-    await supabase.from('bids').update({ status: 'accepted' }).eq('id', bid.id);
-    await supabase.from('bids').update({ status: 'rejected' }).eq('project_id', project.id).neq('id', bid.id);
-    await supabase.from('projects').update({ status: 'in_progress' }).eq('id', project.id);
-    await supabase.from('notifications').insert({
-      user_id: bid.freelancer_id,
-      type: 'bid',
-      title: t('board.bidAccepted.title'),
-      body: `${t('board.bidAccepted.body')} "${project.title}"`,
-      link: 'board',
-    });
+    await acceptBidHelper(bid, t('board.bidAccepted.title'), `${t('board.bidAccepted.body')} "${project.title}"`);
     loadBids();
   };
 

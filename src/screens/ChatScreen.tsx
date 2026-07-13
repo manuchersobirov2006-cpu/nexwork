@@ -5,8 +5,10 @@ import { timeAgo, formatDateTime } from '../lib/format';
 import { Avatar, EmptyState, Spinner } from '../components/ui';
 import { useTheme } from '../lib/theme';
 import { t } from '../lib/i18n';
-import type { Chat, Message, Profile } from '../lib/types';
-import { Send, MessageSquare, Search, ArrowLeft, Paperclip, Smile, UserPlus, AlertCircle } from 'lucide-react';
+import { acceptBid } from '../lib/bids';
+import { formatPrice } from '../lib/format';
+import type { Chat, Message, Profile, BidMessageMetadata } from '../lib/types';
+import { Send, MessageSquare, Search, ArrowLeft, Paperclip, Smile, UserPlus, AlertCircle, Gavel, Check, Clock } from 'lucide-react';
 
 export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
   const { profile } = useAuth();
@@ -24,7 +26,18 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
   const [idInput, setIdInput] = useState('');
   const [idError, setIdError] = useState<string | null>(null);
   const [idLoading, setIdLoading] = useState(false);
+  const [bidStatuses, setBidStatuses] = useState<Record<string, string>>({});
+  const [acceptingBidId, setAcceptingBidId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const loadBidStatuses = useCallback(async (msgs: Message[]) => {
+    const bidIds = Array.from(new Set(
+      msgs.filter(m => m.message_type === 'bid').map(m => (m.metadata as BidMessageMetadata).bid_id)
+    ));
+    if (bidIds.length === 0) return;
+    const { data } = await supabase.from('bids').select('id, status').in('id', bidIds);
+    if (data) setBidStatuses(prev => ({ ...prev, ...Object.fromEntries(data.map(b => [b.id, b.status])) }));
+  }, []);
 
   const loadChats = useCallback(async () => {
     if (!profile) return;
@@ -65,10 +78,13 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
       .select('*')
       .eq('chat_id', chatId)
       .order('created_at', { ascending: true });
-    if (data) setMessages(data as Message[]);
+    if (data) {
+      setMessages(data as Message[]);
+      loadBidStatuses(data as Message[]);
+    }
     setLoadingMessages(false);
     setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-  }, []);
+  }, [loadBidStatuses]);
 
   useEffect(() => { loadChats(); }, [loadChats]);
 
@@ -84,13 +100,15 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
       .channel(`messages:${activeChat.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_id=eq.${activeChat.id}` },
         (payload) => {
-          setMessages(prev => [...prev, payload.new as Message]);
+          const msg = payload.new as Message;
+          setMessages(prev => [...prev, msg]);
+          loadBidStatuses([msg]);
           setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
         }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [activeChat]);
+  }, [activeChat, loadBidStatuses]);
 
   const handleSend = async () => {
     if (!profile || !activeChat || !newMessage.trim()) return;
@@ -118,6 +136,17 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
       loadChats();
     }
     setSending(false);
+  };
+
+  const handleAcceptBid = async (meta: BidMessageMetadata) => {
+    setAcceptingBidId(meta.bid_id);
+    await acceptBid(
+      { id: meta.bid_id, project_id: meta.project_id, freelancer_id: meta.freelancer_id },
+      t('board.bidAccepted.title'),
+      `${t('board.bidAccepted.body')} "${meta.project_title}"`
+    );
+    setBidStatuses(prev => ({ ...prev, [meta.bid_id]: 'accepted' }));
+    setAcceptingBidId(null);
   };
 
   const startChatById = async () => {
@@ -261,6 +290,46 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
               ) : (
                 messages.map(msg => {
                   const isOwn = msg.sender_id === profile?.id;
+
+                  if (msg.message_type === 'bid') {
+                    const meta = msg.metadata as BidMessageMetadata;
+                    const status = bidStatuses[meta.bid_id];
+                    const canAccept = profile?.id === meta.employer_id && status === 'pending';
+                    return (
+                      <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-fade-in`}>
+                        <div className="max-w-[85%] sm:max-w-[70%] card p-4 border-brand-200 dark:border-brand-800">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 rounded-lg bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center shrink-0">
+                              <Gavel className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                            </div>
+                            <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">{meta.project_title}</div>
+                          </div>
+                          <div className="flex items-center gap-3 text-sm mb-3">
+                            <span className="font-bold text-brand-600 dark:text-brand-400">{formatPrice(meta.bid_amount)}</span>
+                            <span className="text-xs text-slate-500 flex items-center gap-1"><Clock className="w-3 h-3" />{meta.delivery_days} {t('board.days')}</span>
+                          </div>
+                          {status === 'accepted' ? (
+                            <span className="badge bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400 gap-1"><Check className="w-3 h-3" /> {t('board.accepted')}</span>
+                          ) : status === 'rejected' ? (
+                            <span className="badge bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">{t('companies.status.rejected')}</span>
+                          ) : canAccept ? (
+                            <button
+                              onClick={() => handleAcceptBid(meta)}
+                              disabled={acceptingBidId === meta.bid_id}
+                              className="btn-primary !py-1.5 text-xs w-full"
+                            >
+                              {acceptingBidId === meta.bid_id ? <Spinner className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
+                              {t('board.accept')}
+                            </button>
+                          ) : (
+                            <span className="badge bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400">{t('companies.status.pending')}</span>
+                          )}
+                          <div className="text-[10px] text-slate-400 mt-2">{formatDateTime(msg.created_at)}</div>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-fade-in`}>
                       <div className={`max-w-[70%] px-4 py-2.5 rounded-2xl ${

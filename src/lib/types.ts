@@ -146,6 +146,16 @@ export interface Chat {
   lastMessage?: Message;
 }
 
+export interface BidMessageMetadata {
+  bid_id: string;
+  project_id: string;
+  project_title: string;
+  employer_id: string;
+  freelancer_id: string;
+  bid_amount: number;
+  delivery_days: number;
+}
+
 export interface Message {
   id: string;
   chat_id: string;
@@ -153,6 +163,8 @@ export interface Message {
   content: string;
   attachments: string[];
   is_read: boolean;
+  message_type: 'text' | 'bid';
+  metadata: BidMessageMetadata | Record<string, never>;
   created_at: string;
 }
 
