@@ -4,6 +4,8 @@ import { useAuth } from '../lib/auth';
 import { CATEGORIES } from '../lib/constants';
 import { formatPrice, timeAgo, daysUntil } from '../lib/format';
 import { Avatar, Badge, Modal, EmptyState, SkeletonCard, Spinner, Stars } from '../components/ui';
+import { useTheme } from '../lib/theme';
+import { t } from '../lib/i18n';
 import type { Project, Bid, Profile } from '../lib/types';
 import {
   Plus, Clock, DollarSign, Users, Gavel,
@@ -12,6 +14,8 @@ import {
 
 export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => void }) {
   const { profile } = useAuth();
+  const { language } = useTheme();
+  void language;
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -54,27 +58,27 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Тендерная доска</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Проекты от заказчиков — подайте заявку</p>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">{t('board.title')}</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{t('board.subtitle')}</p>
         </div>
         <button onClick={() => setShowCreateModal(true)} className="btn-primary">
           <Plus className="w-4 h-4" />
-          Опубликовать проект
+          {t('board.postProject')}
         </button>
       </div>
 
       <div className="card p-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Поиск проектов..." className="input flex-1" />
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={t('board.search')} className="input flex-1" />
           <select value={category} onChange={e => setCategory(e.target.value)} className="input sm:w-48">
-            <option value="all">Все категории</option>
-            {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+            <option value="all">{t('board.allCategories')}</option>
+            {CATEGORIES.map(c => <option key={c.key} value={c.key}>{language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label}</option>)}
           </select>
           <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)} className="input sm:w-48">
-            <option value="newest">Сначала новые</option>
-            <option value="budget_high">Бюджет: по убыванию</option>
-            <option value="bids">Больше заявок</option>
-            <option value="ending">Скоро закроются</option>
+            <option value="newest">{t('board.sort.newest')}</option>
+            <option value="budget_high">{t('board.sort.budgetHigh')}</option>
+            <option value="bids">{t('board.sort.bids')}</option>
+            <option value="ending">{t('board.sort.ending')}</option>
           </select>
         </div>
       </div>
@@ -84,7 +88,7 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : projects.length === 0 ? (
-        <EmptyState icon={Gavel} title="Нет открытых проектов" description="Измените фильтры или опубликуйте свой проект" />
+        <EmptyState icon={Gavel} title={t('board.notFound.title')} description={t('board.notFound.description')} />
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
           {projects.map(project => {
@@ -95,8 +99,8 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
             return (
               <div key={project.id} className="card p-5 hover:shadow-card-hover transition-all duration-200 cursor-pointer animate-fade-in" onClick={() => setSelectedProject(project)}>
                 <div className="flex items-start justify-between mb-3">
-                  <Badge color="blue">{CATEGORIES.find(c => c.key === project.category)?.label || project.category}</Badge>
-                  {hasBid && <Badge color="green"><Check className="w-3 h-3" /> Заявка подана</Badge>}
+                  <Badge color="blue">{(() => { const c = CATEGORIES.find(c => c.key === project.category); if (!c) return project.category; return language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label; })()}</Badge>
+                  {hasBid && <Badge color="green"><Check className="w-3 h-3" /> {t('board.bidPlaced')}</Badge>}
                 </div>
                 <h3 className="font-bold text-slate-900 dark:text-white mb-2 line-clamp-2">{project.title}</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">{project.description}</p>
@@ -110,21 +114,21 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
                 <div className="grid grid-cols-3 gap-2 text-center mb-3">
                   <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2">
                     <DollarSign className="w-4 h-4 text-success-600 mx-auto mb-0.5" />
-                    <div className="text-xs text-slate-500">Бюджет</div>
+                    <div className="text-xs text-slate-500">{t('board.budget')}</div>
                     <div className="text-sm font-bold text-slate-900 dark:text-white">
-                      {project.budget_min && project.budget_max ? `${formatPrice(project.budget_min)}—${formatPrice(project.budget_max)}` : budget ? formatPrice(budget) : 'Договорная'}
+                      {project.budget_min && project.budget_max ? `${formatPrice(project.budget_min)}—${formatPrice(project.budget_max)}` : budget ? formatPrice(budget) : t('board.negotiable')}
                     </div>
                   </div>
                   <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2">
                     <Users className="w-4 h-4 text-brand-600 mx-auto mb-0.5" />
-                    <div className="text-xs text-slate-500">Заявки</div>
+                    <div className="text-xs text-slate-500">{t('board.bids')}</div>
                     <div className="text-sm font-bold text-slate-900 dark:text-white">{project.bids_count}</div>
                   </div>
                   <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2">
                     <Clock className="w-4 h-4 text-warning-600 mx-auto mb-0.5" />
-                    <div className="text-xs text-slate-500">Срок</div>
+                    <div className="text-xs text-slate-500">{t('board.deadline')}</div>
                     <div className="text-sm font-bold text-slate-900 dark:text-white">
-                      {remaining !== null ? (remaining > 0 ? `${remaining}д` : 'Закрыт') : project.duration_days ? `${project.duration_days}д` : '—'}
+                      {remaining !== null ? (remaining > 0 ? `${remaining}${t('board.days')}` : t('board.closed')) : project.duration_days ? `${project.duration_days}${t('board.days')}` : '—'}
                     </div>
                   </div>
                 </div>
@@ -132,7 +136,7 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
                 <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2">
                     <Avatar src={employer?.avatar_url ?? undefined} name={employer?.display_name || employer?.email} size={24} />
-                    <span className="text-xs text-slate-500">{employer?.display_name || employer?.full_name || 'Заказчик'}</span>
+                    <span className="text-xs text-slate-500">{employer?.display_name || employer?.full_name || t('board.employer')}</span>
                   </div>
                   <span className="text-xs text-slate-400">{timeAgo(project.created_at)}</span>
                 </div>
@@ -176,6 +180,7 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
   const [submitting, setSubmitting] = useState(false);
   const employer = project.employer as unknown as Profile | undefined;
   const isOwner = profile?.id === project.employer_id;
+  const { language } = useTheme();
 
   const loadBids = useCallback(async () => {
     const { data } = await supabase
@@ -204,8 +209,8 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
       await supabase.from('notifications').insert({
         user_id: project.employer_id,
         type: 'bid',
-        title: 'Новая заявка на проект',
-        body: `Заявка на "${project.title}" — ${formatPrice(bidAmount)}`,
+        title: t('board.newBid.title'),
+        body: `${t('board.newBid.body')} "${project.title}" — ${formatPrice(bidAmount)}`,
         link: 'board',
       });
     }
@@ -222,8 +227,8 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
     await supabase.from('notifications').insert({
       user_id: bid.freelancer_id,
       type: 'bid',
-      title: 'Заявка принята!',
-      body: `Ваша заявка на проект "${project.title}" принята`,
+      title: t('board.bidAccepted.title'),
+      body: `${t('board.bidAccepted.body')} "${project.title}"`,
       link: 'board',
     });
     loadBids();
@@ -251,14 +256,14 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
             <div className="font-semibold text-slate-900 dark:text-white">{employer?.display_name || employer?.full_name}</div>
             <div className="text-xs text-slate-500">{timeAgo(project.created_at)}</div>
           </div>
-          <Badge color="blue">{CATEGORIES.find(c => c.key === project.category)?.label}</Badge>
+          <Badge color="blue">{(() => { const c = CATEGORIES.find(c => c.key === project.category); if (!c) return ''; return language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label; })()}</Badge>
         </div>
 
         <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-4 whitespace-pre-wrap">{project.description}</p>
 
         {project.skills_required.length > 0 && (
           <div className="mb-4">
-            <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">Требуемые навыки</h4>
+            <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">{t('board.requiredSkills')}</h4>
             <div className="flex flex-wrap gap-2">{project.skills_required.map(s => <Badge key={s} color="slate">{s}</Badge>)}</div>
           </div>
         )}
@@ -266,30 +271,30 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
         <div className="grid grid-cols-3 gap-3 mb-4">
           <div className="card p-3 text-center">
             <DollarSign className="w-5 h-5 text-success-600 mx-auto mb-1" />
-            <div className="text-xs text-slate-500">Бюджет</div>
+            <div className="text-xs text-slate-500">{t('board.budget')}</div>
             <div className="font-bold text-slate-900 dark:text-white text-sm">
-              {project.budget_min && project.budget_max ? `${formatPrice(project.budget_min)}—${formatPrice(project.budget_max)}` : project.budget_fixed ? formatPrice(project.budget_fixed) : 'Договорная'}
+              {project.budget_min && project.budget_max ? `${formatPrice(project.budget_min)}—${formatPrice(project.budget_max)}` : project.budget_fixed ? formatPrice(project.budget_fixed) : t('board.negotiable')}
             </div>
           </div>
           <div className="card p-3 text-center">
             <Calendar className="w-5 h-5 text-brand-600 mx-auto mb-1" />
-            <div className="text-xs text-slate-500">Срок</div>
-            <div className="font-bold text-slate-900 dark:text-white text-sm">{project.duration_days ? `${project.duration_days} дн` : '—'}</div>
+            <div className="text-xs text-slate-500">{t('board.deadline')}</div>
+            <div className="font-bold text-slate-900 dark:text-white text-sm">{project.duration_days ? `${project.duration_days} ${t('board.days')}` : '—'}</div>
           </div>
           <div className="card p-3 text-center">
             <Users className="w-5 h-5 text-brand-600 mx-auto mb-1" />
-            <div className="text-xs text-slate-500">Заявки</div>
+            <div className="text-xs text-slate-500">{t('board.bids')}</div>
             <div className="font-bold text-slate-900 dark:text-white text-sm">{bids.length}</div>
           </div>
         </div>
 
         {/* Bids section */}
         <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-          <h4 className="font-semibold text-slate-900 dark:text-white mb-3">Заявки ({bids.length})</h4>
+          <h4 className="font-semibold text-slate-900 dark:text-white mb-3">{t('board.bids')} ({bids.length})</h4>
           {loadingBids ? (
             <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="skeleton h-16" />)}</div>
           ) : bids.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-4">Заявок пока нет</p>
+            <p className="text-sm text-slate-500 text-center py-4">{t('board.noBidsYet')}</p>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
               {bids.map(bid => {
@@ -304,12 +309,12 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
                     </div>
                     <div className="text-right shrink-0">
                       <div className="font-bold text-brand-600 dark:text-brand-400">{formatPrice(bid.bid_amount)}</div>
-                      <div className="text-xs text-slate-500">{bid.delivery_days} дн</div>
+                      <div className="text-xs text-slate-500">{bid.delivery_days} {t('board.days')}</div>
                     </div>
                     {isOwner && bid.status === 'pending' && (
-                      <button onClick={() => handleAcceptBid(bid)} className="btn-primary !px-3 !py-1.5 text-xs">Принять</button>
+                      <button onClick={() => handleAcceptBid(bid)} className="btn-primary !px-3 !py-1.5 text-xs">{t('board.accept')}</button>
                     )}
-                    {bid.status === 'accepted' && <Badge color="green"><Check className="w-3 h-3" /> Принята</Badge>}
+                    {bid.status === 'accepted' && <Badge color="green"><Check className="w-3 h-3" /> {t('board.accepted')}</Badge>}
                     {!isOwner && profile?.id !== bid.freelancer_id && (
                       <button onClick={() => startChat(bid.freelancer_id)} className="btn-ghost !p-2"><MessageSquare className="w-4 h-4" /></button>
                     )}
@@ -325,37 +330,37 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
           <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
             {hasBid && !showBidForm ? (
               <div className="text-center py-2">
-                <Badge color="green"><Check className="w-3 h-3" /> Вы уже подали заявку</Badge>
+                <Badge color="green"><Check className="w-3 h-3" /> {t('board.alreadyBid')}</Badge>
               </div>
             ) : showBidForm ? (
               <div className="space-y-3 animate-slide-down">
-                <h4 className="font-semibold text-slate-900 dark:text-white">Ваша заявка</h4>
+                <h4 className="font-semibold text-slate-900 dark:text-white">{t('board.yourBid')}</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="label">Ваша цена ($)</label>
+                    <label className="label">{t('board.yourPrice')}</label>
                     <input type="number" value={bidAmount} onChange={e => setBidAmount(Number(e.target.value))} className="input" />
                   </div>
                   <div>
-                    <label className="label">Срок (дней)</label>
+                    <label className="label">{t('board.duration')}</label>
                     <input type="number" value={bidDays} onChange={e => setBidDays(Number(e.target.value))} className="input" />
                   </div>
                 </div>
                 <div>
-                  <label className="label">Сопроводительное письмо</label>
-                  <textarea value={bidMessage} onChange={e => setBidMessage(e.target.value)} rows={3} placeholder="Почему именно вы?" className="input" />
+                  <label className="label">{t('board.coverLetter')}</label>
+                  <textarea value={bidMessage} onChange={e => setBidMessage(e.target.value)} rows={3} placeholder={t('board.coverLetter.placeholder')} className="input" />
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => setShowBidForm(false)} className="btn-secondary flex-1">Отмена</button>
+                  <button onClick={() => setShowBidForm(false)} className="btn-secondary flex-1">{t('board.cancel')}</button>
                   <button onClick={handleBid} disabled={submitting} className="btn-primary flex-1">
                     {submitting ? <Spinner className="w-4 h-4" /> : <Gavel className="w-4 h-4" />}
-                    Подать заявку
+                    {t('board.submitBid')}
                   </button>
                 </div>
               </div>
             ) : (
               <button onClick={() => setShowBidForm(true)} className="btn-primary w-full">
                 <Gavel className="w-4 h-4" />
-                Подать заявку
+                {t('board.submitBid')}
               </button>
             )}
           </div>
@@ -406,48 +411,50 @@ function CreateProjectModal({ onClose, onCreated }: { onClose: () => void; onCre
     onCreated();
   };
 
+  const { language } = useTheme();
+
   return (
-    <Modal open onClose={onClose} size="lg" title="Новый проект">
+    <Modal open onClose={onClose} size="lg" title={t('board.newProject')}>
       <div className="p-6 space-y-4">
         <div>
-          <label className="label">Название проекта</label>
-          <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Например: Нужен лендинг для интернет-магазина" className="input" />
+          <label className="label">{t('board.projectTitle')}</label>
+          <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder={t('board.projectTitle.placeholder')} className="input" />
         </div>
         <div>
-          <label className="label">Описание</label>
-          <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder="Подробно опишите задачу, требования и ожидания..." className="input" />
+          <label className="label">{t('board.description')}</label>
+          <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder={t('board.description.placeholder')} className="input" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label">Категория</label>
+            <label className="label">{t('board.category')}</label>
             <select value={category} onChange={e => setCategory(e.target.value)} className="input">
-              {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+              {CATEGORIES.map(c => <option key={c.key} value={c.key}>{language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="label">Срок (дней)</label>
+            <label className="label">{t('board.duration')}</label>
             <input type="number" value={durationDays} onChange={e => setDurationDays(Number(e.target.value))} min={1} className="input" />
           </div>
         </div>
         <div>
-          <label className="label">Тип бюджета</label>
+          <label className="label">{t('board.budgetType')}</label>
           <div className="flex gap-2 mb-2">
-            <button onClick={() => setBudgetType('range')} className={budgetType === 'range' ? 'btn-primary' : 'btn-secondary'}>Диапазон</button>
-            <button onClick={() => setBudgetType('fixed')} className={budgetType === 'fixed' ? 'btn-primary' : 'btn-secondary'}>Фиксированный</button>
+            <button onClick={() => setBudgetType('range')} className={budgetType === 'range' ? 'btn-primary' : 'btn-secondary'}>{t('board.budgetType.range')}</button>
+            <button onClick={() => setBudgetType('fixed')} className={budgetType === 'fixed' ? 'btn-primary' : 'btn-secondary'}>{t('board.budgetType.fixed')}</button>
           </div>
           {budgetType === 'range' ? (
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="label">Минимум ($)</label><input type="number" value={budgetMin} onChange={e => setBudgetMin(Number(e.target.value))} className="input" /></div>
-              <div><label className="label">Максимум ($)</label><input type="number" value={budgetMax} onChange={e => setBudgetMax(Number(e.target.value))} className="input" /></div>
+              <div><label className="label">{t('board.min')}</label><input type="number" value={budgetMin} onChange={e => setBudgetMin(Number(e.target.value))} className="input" /></div>
+              <div><label className="label">{t('board.max')}</label><input type="number" value={budgetMax} onChange={e => setBudgetMax(Number(e.target.value))} className="input" /></div>
             </div>
           ) : (
-            <div><label className="label">Бюджет ($)</label><input type="number" value={budgetFixed} onChange={e => setBudgetFixed(Number(e.target.value))} className="input" /></div>
+            <div><label className="label">{t('board.fixedBudget')}</label><input type="number" value={budgetFixed} onChange={e => setBudgetFixed(Number(e.target.value))} className="input" /></div>
           )}
         </div>
         <div>
-          <label className="label">Требуемые навыки</label>
+          <label className="label">{t('board.requiredSkills')}</label>
           <div className="flex gap-2 mb-2">
-            <input type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSkill())} placeholder="Добавьте навык" className="input" />
+            <input type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSkill())} placeholder={t('board.addSkill')} className="input" />
             <button onClick={addSkill} className="btn-secondary">+</button>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -455,10 +462,10 @@ function CreateProjectModal({ onClose, onCreated }: { onClose: () => void; onCre
           </div>
         </div>
         <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
-          <button onClick={onClose} className="btn-secondary">Отмена</button>
+          <button onClick={onClose} className="btn-secondary">{t('board.cancel')}</button>
           <button onClick={handleCreate} disabled={saving || !title || !description} className="btn-primary">
             {saving && <Spinner className="w-4 h-4" />}
-            Опубликовать
+            {t('board.publish')}
           </button>
         </div>
       </div>
