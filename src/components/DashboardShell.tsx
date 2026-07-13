@@ -109,11 +109,8 @@ export function DashboardShell({
       `}>
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white">
-                <path d="M12 2L3 7v6c0 5 4 9 9 10 5-1 9-5 9-10V7l-9-5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
-                <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+              <img src="/logo.svg" alt="Nexwork" className="w-full h-full object-cover" />
             </div>
             <span className="font-extrabold text-slate-900 dark:text-white">NexWork</span>
           </div>

@@ -77,12 +77,8 @@ export function AuthModal({ open, onClose, mode: initialMode = 'signin' }: {
     <Modal open={open} onClose={onClose} size="sm">
       <div className="p-6">
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-600 mb-3">
-            <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7 text-white">
-              <path d="M12 2L3 7v6c0 5 4 9 9 10 5-1 9-5 9-10V7l-9-5z" fill="currentColor" opacity="0.2"/>
-              <path d="M12 2L3 7v6c0 5 4 9 9 10 5-1 9-5 9-10V7l-9-5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
-              <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-3 overflow-hidden">
+            <img src="/logo.svg" alt="Nexwork" className="w-full h-full object-cover" />
           </div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
             {mode === 'signin' ? t('auth.signInTitle') : t('auth.signUpTitle')}
