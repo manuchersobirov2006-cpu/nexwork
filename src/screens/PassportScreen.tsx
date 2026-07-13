@@ -295,7 +295,10 @@ export function PassportScreen() {
                   {!done && step.key === 'identity' && identityPending && (
                     <Badge color="amber"><Hourglass className="w-3 h-3" /> {t('passport.pending')}</Badge>
                   )}
-                  {!done && step.key !== 'identity' && (
+                  {!done && step.key === 'payment' && (
+                    <span className="text-xs text-slate-400 shrink-0">{t('passport.notAvailable')}</span>
+                  )}
+                  {!done && step.key === 'skills' && (
                     <button className="btn-ghost text-xs">{t('passport.verify')}</button>
                   )}
                 </div>

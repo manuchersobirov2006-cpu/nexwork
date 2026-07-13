@@ -219,6 +219,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'passport.step.payment.label': 'Платёжные данные',
     'passport.step.payment.description': 'Привяжите счёт для вывода средств',
     'passport.support': 'Поддержка',
+    'passport.notAvailable': 'Пока не доступно',
     // Chat
     'chat.title': 'Сообщения',
     'chat.writeById': 'Написать по ID',
@@ -804,6 +805,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'passport.step.payment.label': 'Toʻlov maʼlumotlari',
     'passport.step.payment.description': 'Mablagʻ yechish uchun hisob ulang',
     'passport.support': 'Yordam',
+    'passport.notAvailable': 'Hozircha mavjud emas',
     'chat.title': 'Xabarlar',
     'chat.writeById': 'ID orqali yozish',
     'chat.searchChats': 'Chatlarni qidirish...',
@@ -1376,6 +1378,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'passport.step.payment.label': 'Payment details',
     'passport.step.payment.description': 'Link an account to withdraw funds',
     'passport.support': 'Support',
+    'passport.notAvailable': 'Not available yet',
     'chat.title': 'Messages',
     'chat.writeById': 'Message by ID',
     'chat.searchChats': 'Search chats...',
