@@ -3,14 +3,20 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { formatPrice, formatNumber } from '../lib/format';
 import { Badge, EmptyState, Spinner } from '../components/ui';
+import { useTheme } from '../lib/theme';
+import { t } from '../lib/i18n';
 import type { Order, Gig, Project, Bid } from '../lib/types';
 import {
   BarChart3, TrendingUp, DollarSign, ShoppingCart,
   Eye, Star, Activity
 } from 'lucide-react';
 
+const LOCALE_MAP: Record<string, string> = { ru: 'ru-RU', uz: 'uz-UZ', en: 'en-US' };
+
 export function AnalyticsScreen() {
   const { profile } = useAuth();
+  const { language } = useTheme();
+  const locale = LOCALE_MAP[language] || 'ru-RU';
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
   const [gigs, setGigs] = useState<Gig[]>([]);
@@ -53,7 +59,7 @@ export function AnalyticsScreen() {
       return d.getMonth() === month.getMonth() && d.getFullYear() === month.getFullYear();
     });
     return {
-      label: month.toLocaleDateString('ru-RU', { month: 'short' }),
+      label: month.toLocaleDateString(locale, { month: 'short' }),
       value: monthOrders.reduce((sum, o) => sum + o.price, 0),
       count: monthOrders.length,
     };
@@ -62,17 +68,17 @@ export function AnalyticsScreen() {
   const maxRevenue = Math.max(...monthlyData.map(d => d.value), 1);
 
   const stats = [
-    { label: 'Общий доход', value: formatPrice(totalRevenue), icon: DollarSign, color: 'success', change: '+12%' },
-    { label: 'Активных заказов', value: activeOrders.length.toString(), icon: ShoppingCart, color: 'blue', change: `${activeOrders.length} в работе` },
-    { label: 'Всего просмотров', value: formatNumber(totalViews), icon: Eye, color: 'accent', change: '+8%' },
-    { label: 'Средний рейтинг', value: avgRating.toFixed(1), icon: Star, color: 'amber', change: `${profile.review_count} отзывов` },
+    { label: t('analytics.totalRevenue'), value: formatPrice(totalRevenue), icon: DollarSign, color: 'success', change: '+12%' },
+    { label: t('analytics.activeOrders'), value: activeOrders.length.toString(), icon: ShoppingCart, color: 'blue', change: `${activeOrders.length} ${t('analytics.inProgress')}` },
+    { label: t('analytics.totalViews'), value: formatNumber(totalViews), icon: Eye, color: 'accent', change: '+8%' },
+    { label: t('analytics.avgRating'), value: avgRating.toFixed(1), icon: Star, color: 'amber', change: `${profile.review_count} ${t('analytics.reviews')}` },
   ];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Аналитика</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">Отслеживайте свою эффективность</p>
+        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">{t('analytics.title')}</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">{t('analytics.subtitle')}</p>
       </div>
 
       {/* Stats cards */}
@@ -96,8 +102,8 @@ export function AnalyticsScreen() {
         <div className="card p-6 animate-slide-up">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="font-bold text-slate-900 dark:text-white">Доход по месяцам</h3>
-              <p className="text-xs text-slate-500">Последние 6 месяцев</p>
+              <h3 className="font-bold text-slate-900 dark:text-white">{t('analytics.revenueByMonth')}</h3>
+              <p className="text-xs text-slate-500">{t('analytics.last6Months')}</p>
             </div>
             <TrendingUp className="w-5 h-5 text-success-600" />
           </div>
@@ -119,14 +125,14 @@ export function AnalyticsScreen() {
 
         {/* Order status distribution */}
         <div className="card p-6 animate-slide-up">
-          <h3 className="font-bold text-slate-900 dark:text-white mb-6">Статусы заказов</h3>
+          <h3 className="font-bold text-slate-900 dark:text-white mb-6">{t('analytics.orderStatuses')}</h3>
           <div className="space-y-4">
             {[
-              { label: 'Завершено', count: completedOrders.length, color: 'bg-success-500' },
-              { label: 'В работе', count: orders.filter(o => o.status === 'active').length, color: 'bg-brand-500' },
-              { label: 'Ожидает', count: orders.filter(o => o.status === 'pending').length, color: 'bg-warning-500' },
-              { label: 'Доставлен', count: orders.filter(o => o.status === 'delivered').length, color: 'bg-purple-500' },
-              { label: 'Отменён', count: orders.filter(o => o.status === 'cancelled').length, color: 'bg-error-500' },
+              { label: t('analytics.status.completed'), count: completedOrders.length, color: 'bg-success-500' },
+              { label: t('analytics.status.active'), count: orders.filter(o => o.status === 'active').length, color: 'bg-brand-500' },
+              { label: t('analytics.status.pending'), count: orders.filter(o => o.status === 'pending').length, color: 'bg-warning-500' },
+              { label: t('analytics.status.delivered'), count: orders.filter(o => o.status === 'delivered').length, color: 'bg-purple-500' },
+              { label: t('analytics.status.cancelled'), count: orders.filter(o => o.status === 'cancelled').length, color: 'bg-error-500' },
             ].map(s => {
               const total = orders.length || 1;
               const pct = (s.count / total) * 100;
@@ -150,9 +156,9 @@ export function AnalyticsScreen() {
         {/* Top gigs */}
         {profile.role === 'freelancer' && (
           <div className="card p-6 animate-slide-up">
-            <h3 className="font-bold text-slate-900 dark:text-white mb-4">Топ услуг по заказам</h3>
+            <h3 className="font-bold text-slate-900 dark:text-white mb-4">{t('analytics.topGigs')}</h3>
             {gigs.length === 0 ? (
-              <EmptyState icon={BarChart3} title="Нет данных" description="Создайте услуги для анализа" />
+              <EmptyState icon={BarChart3} title={t('analytics.noData')} description={t('analytics.createGigs')} />
             ) : (
               <div className="space-y-3">
                 {gigs.sort((a, b) => b.orders_count - a.orders_count).slice(0, 5).map(gig => (
@@ -177,22 +183,22 @@ export function AnalyticsScreen() {
 
         {/* Recent orders */}
         <div className="card p-6 animate-slide-up">
-          <h3 className="font-bold text-slate-900 dark:text-white mb-4">Последние заказы</h3>
+          <h3 className="font-bold text-slate-900 dark:text-white mb-4">{t('analytics.recentOrders')}</h3>
           {orders.length === 0 ? (
-            <EmptyState icon={Activity} title="Нет заказов" description="Заказы появятся здесь" />
+            <EmptyState icon={Activity} title={t('analytics.noOrders')} description={t('analytics.ordersWillAppear')} />
           ) : (
             <div className="space-y-2">
               {orders.slice(0, 6).map(order => (
                 <div key={order.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                      {order.gig?.title || 'Заказ'}
+                      {order.gig?.title || t('analytics.order')}
                     </div>
-                    <div className="text-xs text-slate-500">{new Date(order.created_at).toLocaleDateString('ru-RU')}</div>
+                    <div className="text-xs text-slate-500">{new Date(order.created_at).toLocaleDateString(locale)}</div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge color={order.status === 'completed' ? 'green' : order.status === 'active' ? 'blue' : 'amber'}>
-                      {order.status === 'completed' ? 'Завершён' : order.status === 'active' ? 'В работе' : order.status === 'pending' ? 'Ожидает' : order.status}
+                      {order.status === 'completed' ? t('analytics.status.completed') : order.status === 'active' ? t('analytics.status.active') : order.status === 'pending' ? t('analytics.status.pending') : order.status}
                     </Badge>
                     <span className="font-semibold text-slate-900 dark:text-white text-sm">{formatPrice(order.price)}</span>
                   </div>
@@ -206,23 +212,23 @@ export function AnalyticsScreen() {
       {/* Bids summary for freelancers */}
       {profile.role === 'freelancer' && bids.length > 0 && (
         <div className="card p-6 mt-6 animate-slide-up">
-          <h3 className="font-bold text-slate-900 dark:text-white mb-4">Мои заявки на тендеры</h3>
+          <h3 className="font-bold text-slate-900 dark:text-white mb-4">{t('analytics.myBids')}</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="text-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{bids.length}</div>
-              <div className="text-xs text-slate-500">Всего заявок</div>
+              <div className="text-xs text-slate-500">{t('analytics.totalBids')}</div>
             </div>
             <div className="text-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
               <div className="text-2xl font-bold text-success-600">{acceptedBids.length}</div>
-              <div className="text-xs text-slate-500">Принято</div>
+              <div className="text-xs text-slate-500">{t('analytics.accepted')}</div>
             </div>
             <div className="text-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
               <div className="text-2xl font-bold text-warning-600">{bids.filter(b => b.status === 'pending').length}</div>
-              <div className="text-xs text-slate-500">Ожидают</div>
+              <div className="text-xs text-slate-500">{t('analytics.pending')}</div>
             </div>
             <div className="text-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{((acceptedBids.length / bids.length) * 100).toFixed(0)}%</div>
-              <div className="text-xs text-slate-500">Конверсия</div>
+              <div className="text-xs text-slate-500">{t('analytics.conversion')}</div>
             </div>
           </div>
         </div>
