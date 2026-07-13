@@ -1,25 +1,38 @@
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
+import { useTheme } from '../lib/theme';
 import { supabase } from '../lib/supabase';
 import { PREMIUM_PLANS } from '../lib/constants';
 import { Badge, Spinner } from '../components/ui';
+import { t } from '../lib/i18n';
 import { Crown, Check, Zap, TrendingUp, Shield, Star } from 'lucide-react';
 
-const BENEFITS = [
-  { icon: TrendingUp, title: 'Приоритет в поиске', description: 'Ваши услуги отображаются выше конкурентов' },
-  { icon: Zap, title: 'Меньше комиссий', description: 'Сниженная комиссия платформы на все заказы' },
-  { icon: Crown, title: 'Премиум-бейдж', description: 'Выделитесь золотым значком в профиле и каталоге' },
-  { icon: Shield, title: 'VIP-поддержка', description: 'Приоритетная поддержка 24/7' },
-  { icon: Star, title: 'Расширенная аналитика', description: 'Подробные графики и отчёты по эффективности' },
-];
+function useBenefits() {
+  return [
+    { icon: TrendingUp, title: t('premium.benefit.priority.title'), description: t('premium.benefit.priority.description') },
+    { icon: Zap, title: t('premium.benefit.fees.title'), description: t('premium.benefit.fees.description') },
+    { icon: Crown, title: t('premium.benefit.badge.title'), description: t('premium.benefit.badge.description') },
+    { icon: Shield, title: t('premium.benefit.support.title'), description: t('premium.benefit.support.description') },
+    { icon: Star, title: t('premium.benefit.analytics.title'), description: t('premium.benefit.analytics.description') },
+  ];
+}
+
+const LOCALE_MAP: Record<string, string> = { ru: 'ru-RU', uz: 'uz-UZ', en: 'en-US' };
 
 export function PremiumScreen() {
   const { profile, updateProfile } = useAuth();
+  const { language } = useTheme();
+  const locale = LOCALE_MAP[language] || 'ru-RU';
+  const BENEFITS = useBenefits();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [activating, setActivating] = useState(false);
   const [activated, setActivated] = useState(false);
 
   if (!profile) return null;
+
+  const planName = (plan: typeof PREMIUM_PLANS[number]) => (language === 'en' ? plan.nameEn : language === 'uz' ? plan.nameUz : plan.name);
+  const planPeriod = (plan: typeof PREMIUM_PLANS[number]) => (language === 'en' ? plan.periodEn : language === 'uz' ? plan.periodUz : plan.period);
+  const planFeatures = (plan: typeof PREMIUM_PLANS[number]) => (language === 'en' ? plan.featuresEn : language === 'uz' ? plan.featuresUz : plan.features);
 
   const handleActivate = async () => {
     if (!selectedPlan) return;
@@ -34,14 +47,20 @@ export function PremiumScreen() {
     await supabase.from('notifications').insert({
       user_id: profile.id,
       type: 'premium',
-      title: 'Premium активирован!',
-      body: `План ${plan?.name} активирован на 1 месяц`,
+      title: t('premium.notification.title'),
+      body: t('premium.notification.body').replace('{plan}', plan ? planName(plan) : ''),
       link: 'premium',
     });
     setActivating(false);
     setActivated(true);
     setTimeout(() => setActivated(false), 3000);
   };
+
+  const faq = [
+    { q: t('premium.faq.q1'), a: t('premium.faq.a1') },
+    { q: t('premium.faq.q2'), a: t('premium.faq.a2') },
+    { q: t('premium.faq.q3'), a: t('premium.faq.a3') },
+  ];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
@@ -52,11 +71,11 @@ export function PremiumScreen() {
         </div>
         <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">Nexwork Premium</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-xl mx-auto">
-          Откройте все возможности платформы и выйдите на новый уровень
+          {t('premium.subtitle')}
         </p>
         {profile.is_premium && (
           <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400 rounded-full text-sm font-medium">
-            <Check className="w-4 h-4" /> Premium активен до {new Date(profile.premium_until || '').toLocaleDateString('ru-RU')}
+            <Check className="w-4 h-4" /> {t('premium.activeUntil')} {new Date(profile.premium_until || '').toLocaleDateString(locale)}
           </div>
         )}
       </div>
@@ -66,8 +85,8 @@ export function PremiumScreen() {
           <div className="flex items-center gap-3">
             <Check className="w-6 h-6 text-success-600" />
             <div>
-              <div className="font-bold text-success-700 dark:text-success-400">Premium активирован!</div>
-              <div className="text-sm text-success-600 dark:text-success-500">Наслаждайтесь всеми преимуществами</div>
+              <div className="font-bold text-success-700 dark:text-success-400">{t('premium.activated')}</div>
+              <div className="text-sm text-success-600 dark:text-success-500">{t('premium.enjoy')}</div>
             </div>
           </div>
         </div>
@@ -83,18 +102,18 @@ export function PremiumScreen() {
           >
             {plan.popular && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <Badge color="blue" className="shadow-md">Популярный</Badge>
+                <Badge color="blue" className="shadow-md">{t('premium.popular')}</Badge>
               </div>
             )}
             <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">{plan.name}</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">{planName(plan)}</h3>
               <div className="mt-3 flex items-baseline justify-center gap-1">
                 <span className="text-4xl font-extrabold text-slate-900 dark:text-white">${plan.price}</span>
-                <span className="text-slate-500">/{plan.period}</span>
+                <span className="text-slate-500">/{planPeriod(plan)}</span>
               </div>
             </div>
             <ul className="space-y-3 mb-6">
-              {plan.features.map(f => (
+              {planFeatures(plan).map(f => (
                 <li key={f} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
                   <Check className="w-4 h-4 text-success-500 mt-0.5 shrink-0" />
                   {f}
@@ -107,7 +126,7 @@ export function PremiumScreen() {
               className={`w-full ${plan.popular ? 'btn-primary' : 'btn-secondary'} ${profile.is_premium ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {activating && selectedPlan === plan.key ? <Spinner className="w-4 h-4" /> : null}
-              {profile.is_premium ? 'Активен' : 'Выбрать'}
+              {profile.is_premium ? t('premium.active') : t('premium.select')}
             </button>
           </div>
         ))}
@@ -115,7 +134,7 @@ export function PremiumScreen() {
 
       {/* Benefits */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white text-center mb-8">Что вы получаете</h2>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white text-center mb-8">{t('premium.whatYouGet')}</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {BENEFITS.map((b, i) => (
             <div key={i} className="card p-5 animate-slide-up" style={{ animationDelay: `${i * 80}ms` }}>
@@ -131,13 +150,9 @@ export function PremiumScreen() {
 
       {/* FAQ */}
       <div className="card p-6">
-        <h3 className="font-bold text-slate-900 dark:text-white mb-4">Частые вопросы</h3>
+        <h3 className="font-bold text-slate-900 dark:text-white mb-4">{t('premium.faq')}</h3>
         <div className="space-y-4">
-          {[
-            { q: 'Можно ли отменить подписку?', a: 'Да, отменить можно в любой момент в настройках. Premium действует до конца оплаченного периода.' },
-            { q: 'Какие способы оплаты?', a: 'Карты Visa, Mastercard, электронные кошельки и банковские переводы.' },
-            { q: 'Возвращаете ли деньги?', a: 'Да, в течение 14 дней можно вернуть полную стоимость без вопросов.' },
-          ].map((item, i) => (
+          {faq.map((item, i) => (
             <div key={i} className="border-b border-slate-100 dark:border-slate-800 pb-4 last:border-0 last:pb-0">
               <h4 className="font-medium text-slate-900 dark:text-white text-sm mb-1">{item.q}</h4>
               <p className="text-sm text-slate-500">{item.a}</p>
