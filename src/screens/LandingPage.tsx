@@ -4,7 +4,7 @@ import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { CATEGORIES } from '../lib/constants';
 import { useTheme } from '../lib/theme';
 import { supabase } from '../lib/supabase';
-import { t } from '../lib/i18n';
+import { t, getLanguage } from '../lib/i18n';
 import {
   Search, Sun, Moon, Menu, X, ArrowRight, Check, Star,
   Palette, Code, Megaphone, PenLine, Video, Music, Briefcase,
@@ -56,8 +56,13 @@ function getDefaultSteps() {
 }
 
 function getDefaultHero() {
+  const titles: Record<string, string> = {
+    ru: 'Найти работу стало проще',
+    uz: 'Ish topish osonlashdi',
+    en: 'Finding work just got easier',
+  };
   return {
-    title: 'Найдите эксперта или станьте им',
+    title: titles[getLanguage()] ?? titles.ru,
     subtitle: 'Nexwork соединяет фрилансеров и заказчиков в Центральной Азии. Услуги, тендеры, мессенджер и аналитика — всё в одной платформе.',
   };
 }
@@ -79,12 +84,14 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
   const [features, setFeatures] = useState(getDefaultFeatures());
   const [steps, setSteps] = useState(getDefaultSteps());
 
-  // DB-authored content (platform_content) is Russian-only. For ru we show it
-  // as-is; for other languages we fall back to the translated defaults instead.
+  // The hero title/subtitle are always the code-defined slogan (not sourced
+  // from platform_content) so it can't be overridden by stale admin-authored
+  // DB content. Stats/features/steps still come from the DB for ru.
   useEffect(() => {
+    setHeroTitle(getDefaultHero().title);
+    setHeroSubtitle(getDefaultHero().subtitle);
+
     if (language !== 'ru') {
-      setHeroTitle(getDefaultHero().title);
-      setHeroSubtitle(getDefaultHero().subtitle);
       setStats(getDefaultStats());
       setFeatures(getDefaultFeatures());
       setSteps(getDefaultSteps());
@@ -100,11 +107,6 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
       .then(({ data }) => {
         if (!data || data.length === 0) return;
         const rows = data as ContentRow[];
-
-        const heroTitleRow = rows.find(r => r.key === 'hero_title');
-        const heroSubRow = rows.find(r => r.key === 'hero_subtitle');
-        if (heroTitleRow?.title) setHeroTitle(heroTitleRow.title);
-        if (heroSubRow?.title) setHeroSubtitle(heroSubRow.title);
 
         const statRows = rows.filter(r => r.section === 'stats');
         if (statRows.length > 0) {
