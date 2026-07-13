@@ -5,6 +5,8 @@ import { CATEGORIES, BUDGET_RANGES, DELIVERY_OPTIONS, pexelsImage } from '../lib
 import { formatPrice } from '../lib/format';
 import { Avatar, Badge, Stars, Modal, EmptyState, SkeletonCard, Spinner } from '../components/ui';
 import { GigImageUpload } from '../components/GigImageUpload';
+import { useTheme } from '../lib/theme';
+import { t } from '../lib/i18n';
 import type { Gig, Profile } from '../lib/types';
 import {
   Search, SlidersHorizontal, Plus, Heart, Clock, Eye,
@@ -32,6 +34,8 @@ function getGigGallery(gig: Gig): string[] {
 
 export function GigsScreen({ onOpenChat }: { onOpenChat?: (userId: string) => void }) {
   const { profile } = useAuth();
+  const { language } = useTheme();
+  void language;
   const [gigs, setGigs] = useState<Gig[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -113,12 +117,12 @@ export function GigsScreen({ onOpenChat }: { onOpenChat?: (userId: string) => vo
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Каталог услуг</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Найдите эксперта для любой задачи</p>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">{t('gigs.title')}</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{t('gigs.subtitle')}</p>
         </div>
         <button onClick={() => setShowCreateModal(true)} className="btn-primary">
           <Plus className="w-4 h-4" />
-          Создать услугу
+          {t('gigs.create')}
         </button>
       </div>
 
@@ -126,40 +130,40 @@ export function GigsScreen({ onOpenChat }: { onOpenChat?: (userId: string) => vo
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Поиск по услугам..." className="input pl-10" />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={t('gigs.search')} className="input pl-10" />
           </div>
           <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)} className="input sm:w-48">
-            <option value="newest">Сначала новые</option>
-            <option value="popular">Популярные</option>
-            <option value="price_low">Цена: по возрастанию</option>
-            <option value="price_high">Цена: по убыванию</option>
+            <option value="newest">{t('gigs.sort.newest')}</option>
+            <option value="popular">{t('gigs.sort.popular')}</option>
+            <option value="price_low">{t('gigs.sort.priceLow')}</option>
+            <option value="price_high">{t('gigs.sort.priceHigh')}</option>
           </select>
           <button onClick={() => setShowFilters(!showFilters)} className="btn-secondary">
             <SlidersHorizontal className="w-4 h-4" />
-            Фильтры
+            {t('gigs.filters')}
           </button>
         </div>
 
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 grid sm:grid-cols-3 gap-3 animate-slide-down">
             <div>
-              <label className="label">Категория</label>
+              <label className="label">{t('gigs.category')}</label>
               <select value={category} onChange={e => setCategory(e.target.value)} className="input">
-                <option value="all">Все категории</option>
-                {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                <option value="all">{t('gigs.allCategories')}</option>
+                {CATEGORIES.map(c => <option key={c.key} value={c.key}>{language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="label">Бюджет</label>
+              <label className="label">{t('gigs.budget')}</label>
               <select value={budget} onChange={e => setBudget(e.target.value)} className="input">
-                <option value="all">Любой</option>
+                <option value="all">{t('gigs.any')}</option>
                 {BUDGET_RANGES.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="label">Срок</label>
+              <label className="label">{t('gigs.delivery')}</label>
               <select value={delivery} onChange={e => setDelivery(e.target.value)} className="input">
-                <option value="all">Любой</option>
+                <option value="all">{t('gigs.any')}</option>
                 {DELIVERY_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
               </select>
             </div>
@@ -172,7 +176,7 @@ export function GigsScreen({ onOpenChat }: { onOpenChat?: (userId: string) => vo
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : gigs.length === 0 ? (
-        <EmptyState icon={Tag} title="Услуги не найдены" description="Попробуйте изменить фильтры или поисковый запрос" />
+        <EmptyState icon={Tag} title={t('gigs.notFound.title')} description={t('gigs.notFound.description')} />
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {gigs.map(gig => {
@@ -189,7 +193,7 @@ export function GigsScreen({ onOpenChat }: { onOpenChat?: (userId: string) => vo
                   <img src={cover} alt={gig.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   {!hasRealPhotos && (
                     <div className="absolute top-2 left-2 px-2 py-0.5 text-[10px] bg-black/50 text-white rounded flex items-center gap-1">
-                      <ImageIcon className="w-3 h-3" /> Заглушка
+                      <ImageIcon className="w-3 h-3" /> {t('gigs.placeholder')}
                     </div>
                   )}
                   <button
@@ -200,19 +204,23 @@ export function GigsScreen({ onOpenChat }: { onOpenChat?: (userId: string) => vo
                   </button>
                   <div className="absolute bottom-3 left-3">
                     <Badge color="blue" className="backdrop-blur-sm bg-white/90 dark:bg-slate-900/90">
-                      {CATEGORIES.find(c => c.key === gig.category)?.label || gig.category}
+                      {(() => {
+                        const c = CATEGORIES.find(c => c.key === gig.category);
+                        if (!c) return gig.category;
+                        return language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label;
+                      })()}
                     </Badge>
                   </div>
                 </div>
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Avatar src={seller?.avatar_url ?? undefined} name={seller?.display_name || seller?.email} size={20} />
-                    <span className="text-xs text-slate-500 truncate">{seller?.display_name || seller?.full_name || 'Эксперт'}</span>
+                    <span className="text-xs text-slate-500 truncate">{seller?.display_name || seller?.full_name || t('gigs.expert')}</span>
                     {seller?.is_verified && <span className="text-brand-500 text-xs">✓</span>}
                   </div>
                   <h3 className="font-semibold text-slate-900 dark:text-white text-sm line-clamp-2 mb-2 min-h-[2.5rem]">{gig.title}</h3>
                   <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
-                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{gig.delivery_days} дн</span>
+                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{gig.delivery_days} {t('gigs.days')}</span>
                     <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{gig.views}</span>
                     {gig.rating > 0 && (
                       <span className="flex items-center gap-1">
@@ -223,11 +231,11 @@ export function GigsScreen({ onOpenChat }: { onOpenChat?: (userId: string) => vo
                   </div>
                   <div className="flex items-end justify-between">
                     <div>
-                      <div className="text-[11px] text-slate-400">от</div>
+                      <div className="text-[11px] text-slate-400">{t('gigs.from')}</div>
                       <div className="text-lg font-bold text-brand-600 dark:text-brand-400">{formatPrice(gig.price)}</div>
                     </div>
                     <button onClick={(e) => { e.stopPropagation(); setSelectedGig(gig); }} className="btn-secondary !px-3 !py-1.5 text-xs">
-                      Подробнее
+                      {t('gigs.details')}
                     </button>
                   </div>
                 </div>
@@ -280,8 +288,8 @@ function GigDetailModal({ gig, onClose, onChat, isFavorite, onToggleFav }: {
     setOrdering(false);
     if (data) {
       await supabase.from('notifications').insert({
-        user_id: gig.seller_id, type: 'order', title: 'Новый заказ!',
-        body: `Заказ на услугу "${gig.title}"`, link: 'orders',
+        user_id: gig.seller_id, type: 'order', title: t('gigs.newOrder.title'),
+        body: `${t('gigs.newOrder.body')} "${gig.title}"`, link: 'orders',
       });
       onClose();
     }
@@ -339,8 +347,8 @@ function GigDetailModal({ gig, onClose, onChat, isFavorite, onToggleFav }: {
           <Avatar src={seller?.avatar_url ?? undefined} name={seller?.display_name || seller?.email} size={44} />
           <div className="flex-1">
             <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-1">
-              {seller?.display_name || seller?.full_name || 'Эксперт'}
-              {seller?.is_verified && <Badge color="blue" className="ml-1">✓ Проверен</Badge>}
+              {seller?.display_name || seller?.full_name || t('gigs.expert')}
+              {seller?.is_verified && <Badge color="blue" className="ml-1">✓ {t('gigs.verified')}</Badge>}
             </div>
             <div className="text-sm text-slate-500">
               {seller?.rating != null && seller?.rating > 0 && <span className="flex items-center gap-1"><Stars rating={seller.rating} size={12} /> {seller.rating} ({seller.review_count})</span>}
@@ -353,27 +361,27 @@ function GigDetailModal({ gig, onClose, onChat, isFavorite, onToggleFav }: {
 
         <div className="grid grid-cols-3 gap-3 mb-4">
           <div className="card p-3 text-center">
-            <div className="text-xs text-slate-500">Цена</div>
+            <div className="text-xs text-slate-500">{t('gigs.price')}</div>
             <div className="font-bold text-brand-600 dark:text-brand-400">{formatPrice(gig.price)}</div>
           </div>
           <div className="card p-3 text-center">
-            <div className="text-xs text-slate-500">Срок</div>
-            <div className="font-bold text-slate-900 dark:text-white">{gig.delivery_days} дн</div>
+            <div className="text-xs text-slate-500">{t('gigs.delivery.short')}</div>
+            <div className="font-bold text-slate-900 dark:text-white">{gig.delivery_days} {t('gigs.days')}</div>
           </div>
           <div className="card p-3 text-center">
-            <div className="text-xs text-slate-500">Редакции</div>
+            <div className="text-xs text-slate-500">{t('gigs.revisions')}</div>
             <div className="font-bold text-slate-900 dark:text-white">{gig.revisions}</div>
           </div>
         </div>
 
         <div className="mb-4">
-          <h3 className="font-semibold text-slate-900 dark:text-white mb-2">Описание</h3>
+          <h3 className="font-semibold text-slate-900 dark:text-white mb-2">{t('gigs.description')}</h3>
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">{gig.description}</p>
         </div>
 
         {gig.tags.length > 0 && (
           <div className="mb-4">
-            <h3 className="font-semibold text-slate-900 dark:text-white mb-2">Теги</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-2">{t('gigs.tags')}</h3>
             <div className="flex flex-wrap gap-2">
               {gig.tags.map(t => <Badge key={t} color="slate">{t}</Badge>)}
             </div>
@@ -382,16 +390,16 @@ function GigDetailModal({ gig, onClose, onChat, isFavorite, onToggleFav }: {
 
         {profile?.id !== gig.seller_id && (
           <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-            <label className="label">Требования к заказу (необязательно)</label>
-            <textarea value={requirements} onChange={e => setRequirements(e.target.value)} rows={3} placeholder="Опишите, что вам нужно..." className="input mb-3" />
+            <label className="label">{t('gigs.requirements')}</label>
+            <textarea value={requirements} onChange={e => setRequirements(e.target.value)} rows={3} placeholder={t('gigs.requirements.placeholder')} className="input mb-3" />
             <div className="flex gap-2">
               <button onClick={handleOrder} disabled={ordering} className="btn-primary flex-1">
                 {ordering ? <Spinner className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
-                Заказать за {formatPrice(gig.price)}
+                {t('gigs.orderFor')} {formatPrice(gig.price)}
               </button>
               <button onClick={onChat} className="btn-secondary">
                 <MessageSquare className="w-4 h-4" />
-                Написать
+                {t('gigs.write')}
               </button>
             </div>
           </div>
@@ -437,12 +445,14 @@ function CreateGigModal({ onClose, onCreated }: { onClose: () => void; onCreated
   // Use a temp ID for image path before gig is created
   const tempGigId = `temp-${profile?.id?.slice(0, 8)}`;
 
+  const { language } = useTheme();
+
   return (
-    <Modal open onClose={onClose} size="lg" title="Новая услуга">
+    <Modal open onClose={onClose} size="lg" title={t('gigs.new')}>
       <div className="p-6 space-y-4">
         <div>
-          <label className="label">Название услуги</label>
-          <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Например: Создам логотип для вашего бренда" className="input" />
+          <label className="label">{t('gigs.name')}</label>
+          <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder={t('gigs.name.placeholder')} className="input" />
         </div>
 
         {profile && (
@@ -454,51 +464,51 @@ function CreateGigModal({ onClose, onCreated }: { onClose: () => void; onCreated
         )}
 
         <div>
-          <label className="label">Описание</label>
-          <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder="Подробно опишите, что входит в услугу..." className="input" />
+          <label className="label">{t('gigs.description')}</label>
+          <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder={t('gigs.description.placeholder')} className="input" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label">Категория</label>
+            <label className="label">{t('gigs.category')}</label>
             <select value={category} onChange={e => setCategory(e.target.value)} className="input">
-              {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+              {CATEGORIES.map(c => <option key={c.key} value={c.key}>{language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="label">Цена ($)</label>
+            <label className="label">{t('gigs.priceLabel')}</label>
             <input type="number" value={price} onChange={e => setPrice(Number(e.target.value))} min={5} className="input" />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label">Срок (дней)</label>
+            <label className="label">{t('gigs.deliveryDays')}</label>
             <input type="number" value={deliveryDays} onChange={e => setDeliveryDays(Number(e.target.value))} min={1} className="input" />
           </div>
           <div>
-            <label className="label">Редакций</label>
+            <label className="label">{t('gigs.revisionsLabel')}</label>
             <input type="number" value={revisions} onChange={e => setRevisions(Number(e.target.value))} min={0} className="input" />
           </div>
         </div>
         <div>
-          <label className="label">Теги</label>
+          <label className="label">{t('gigs.tagsLabel')}</label>
           <div className="flex gap-2 mb-2">
-            <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())} placeholder="Добавьте тег и нажмите Enter" className="input" />
+            <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())} placeholder={t('gigs.tags.placeholder')} className="input" />
             <button onClick={addTag} className="btn-secondary">+</button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {tags.map(t => (
-              <span key={t} className="badge bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
-                {t}
-                <button onClick={() => setTags(tags.filter(x => x !== t))} className="ml-1">×</button>
+            {tags.map(tag => (
+              <span key={tag} className="badge bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
+                {tag}
+                <button onClick={() => setTags(tags.filter(x => x !== tag))} className="ml-1">×</button>
               </span>
             ))}
           </div>
         </div>
         <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
-          <button onClick={onClose} className="btn-secondary">Отмена</button>
+          <button onClick={onClose} className="btn-secondary">{t('gigs.cancel')}</button>
           <button onClick={handleCreate} disabled={saving || !title || !description} className="btn-primary">
             {saving && <Spinner className="w-4 h-4" />}
-            Опубликовать
+            {t('gigs.publish')}
           </button>
         </div>
       </div>
