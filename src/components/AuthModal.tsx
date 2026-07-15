@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { Modal, Spinner } from './ui';
 import { useTheme } from '../lib/theme';
@@ -25,6 +25,11 @@ export function AuthModal({ open, onClose, mode: initialMode = 'signin' }: {
   const { language } = useTheme();
   void language;
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
+
+  useEffect(() => {
+    if (open) setMode(initialMode);
+  }, [open, initialMode]);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');

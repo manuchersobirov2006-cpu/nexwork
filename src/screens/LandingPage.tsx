@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AuthModal } from '../components/AuthModal';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { FooterInfoModal, type FooterInfoKey } from '../components/FooterInfoModal';
 import { CATEGORIES } from '../lib/constants';
 import { useTheme } from '../lib/theme';
 import { supabase } from '../lib/supabase';
@@ -61,9 +62,14 @@ function getDefaultHero() {
     uz: 'Ish topish osonlashdi',
     en: 'Finding work just got easier',
   };
+  const subtitles: Record<string, string> = {
+    ru: 'Nexwork соединяет фрилансеров и заказчиков в Центральной Азии. Услуги, тендеры, мессенджер и аналитика — всё в одной платформе.',
+    uz: "Nexwork Markaziy Osiyodagi frilanserlar va buyurtmachilarni bog'laydi. Xizmatlar, tenderlar, messenjer va analitika — barchasi bitta platformada.",
+    en: 'Nexwork connects freelancers and clients across Central Asia. Services, tenders, messaging, and analytics — all in one platform.',
+  };
   return {
     title: titles[getLanguage()] ?? titles.ru,
-    subtitle: 'Nexwork соединяет фрилансеров и заказчиков в Центральной Азии. Услуги, тендеры, мессенджер и аналитика — всё в одной платформе.',
+    subtitle: subtitles[getLanguage()] ?? subtitles.ru,
   };
 }
 
@@ -75,6 +81,7 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [footerModal, setFooterModal] = useState<FooterInfoKey | null>(null);
   const { theme, toggleTheme, language } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -370,16 +377,17 @@ export function LandingPage({ onNavigateDashboard }: { onNavigateDashboard?: () 
               <span className="text-sm text-slate-400">© 2026</span>
             </div>
             <div className="flex gap-6 text-sm text-slate-500 dark:text-slate-400">
-              <a href="#" className="hover:text-brand-600">{t('landing.footer.about')}</a>
-              <a href="#" className="hover:text-brand-600">{t('landing.footer.terms')}</a>
-              <a href="#" className="hover:text-brand-600">{t('landing.footer.privacy')}</a>
-              <a href="#" className="hover:text-brand-600">{t('landing.footer.support')}</a>
+              <button onClick={() => setFooterModal('about')} className="hover:text-brand-600">{t('landing.footer.about')}</button>
+              <button onClick={() => setFooterModal('terms')} className="hover:text-brand-600">{t('landing.footer.terms')}</button>
+              <button onClick={() => setFooterModal('privacy')} className="hover:text-brand-600">{t('landing.footer.privacy')}</button>
+              <button onClick={() => setFooterModal('support')} className="hover:text-brand-600">{t('landing.footer.support')}</button>
             </div>
           </div>
         </div>
       </footer>
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} mode={authMode} />
+      {footerModal && <FooterInfoModal topic={footerModal} onClose={() => setFooterModal(null)} />}
     </div>
   );
 }
