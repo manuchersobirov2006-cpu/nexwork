@@ -154,6 +154,8 @@ export interface BidMessageMetadata {
   freelancer_id: string;
   bid_amount: number;
   delivery_days: number;
+  message: string;
+  portfolio_item_ids: string[];
 }
 
 export interface Message {

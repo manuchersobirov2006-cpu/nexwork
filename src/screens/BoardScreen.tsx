@@ -99,6 +99,13 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
             const hasBid = myBids.has(project.id);
             return (
               <div key={project.id} className="card p-5 hover:shadow-card-hover transition-all duration-200 cursor-pointer animate-fade-in" onClick={() => setSelectedProject(project)}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Avatar src={employer?.avatar_url ?? undefined} name={employer?.display_name || employer?.email} size={36} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">{employer?.display_name || employer?.full_name || t('board.employer')}</div>
+                    <div className="text-[11px] text-slate-400">{timeAgo(project.created_at)}</div>
+                  </div>
+                </div>
                 <div className="flex items-start justify-between mb-3">
                   <Badge color="blue">{(() => { const c = CATEGORIES.find(c => c.key === project.category); if (!c) return project.category; return language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label; })()}</Badge>
                   {hasBid && <Badge color="green"><Check className="w-3 h-3" /> {t('board.bidPlaced')}</Badge>}
@@ -134,13 +141,6 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <Avatar src={employer?.avatar_url ?? undefined} name={employer?.display_name || employer?.email} size={24} />
-                    <span className="text-xs text-slate-500">{employer?.display_name || employer?.full_name || t('board.employer')}</span>
-                  </div>
-                  <span className="text-xs text-slate-400">{timeAgo(project.created_at)}</span>
-                </div>
               </div>
             );
           })}
@@ -246,6 +246,8 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
           freelancer_id: profile.id,
           bid_amount: bidAmount,
           delivery_days: bidDays,
+          message: bidMessage,
+          portfolio_item_ids: selectedPortfolioIds,
         },
         `${t('board.newBid.body')} "${project.title}" — ${formatPrice(bidAmount)}`
       );

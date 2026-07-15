@@ -7,8 +7,8 @@ import { useTheme } from '../lib/theme';
 import { t } from '../lib/i18n';
 import { acceptBid } from '../lib/bids';
 import { formatPrice } from '../lib/format';
-import type { Chat, Message, Profile, BidMessageMetadata } from '../lib/types';
-import { Send, MessageSquare, Search, ArrowLeft, Paperclip, Smile, UserPlus, AlertCircle, Gavel, Check, Clock } from 'lucide-react';
+import type { Chat, Message, Profile, BidMessageMetadata, PortfolioItem } from '../lib/types';
+import { Send, MessageSquare, Search, ArrowLeft, Paperclip, Smile, UserPlus, AlertCircle, Gavel, Check, Clock, Briefcase, ExternalLink } from 'lucide-react';
 
 export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
   const { profile } = useAuth();
@@ -27,16 +27,22 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
   const [idError, setIdError] = useState<string | null>(null);
   const [idLoading, setIdLoading] = useState(false);
   const [bidStatuses, setBidStatuses] = useState<Record<string, string>>({});
+  const [bidPortfolioById, setBidPortfolioById] = useState<Record<string, PortfolioItem>>({});
   const [acceptingBidId, setAcceptingBidId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const loadBidStatuses = useCallback(async (msgs: Message[]) => {
-    const bidIds = Array.from(new Set(
-      msgs.filter(m => m.message_type === 'bid').map(m => (m.metadata as BidMessageMetadata).bid_id)
-    ));
-    if (bidIds.length === 0) return;
-    const { data } = await supabase.from('bids').select('id, status').in('id', bidIds);
-    if (data) setBidStatuses(prev => ({ ...prev, ...Object.fromEntries(data.map(b => [b.id, b.status])) }));
+    const bidMsgs = msgs.filter(m => m.message_type === 'bid').map(m => m.metadata as BidMessageMetadata);
+    const bidIds = Array.from(new Set(bidMsgs.map(m => m.bid_id)));
+    if (bidIds.length > 0) {
+      const { data } = await supabase.from('bids').select('id, status').in('id', bidIds);
+      if (data) setBidStatuses(prev => ({ ...prev, ...Object.fromEntries(data.map(b => [b.id, b.status])) }));
+    }
+    const portfolioIds = Array.from(new Set(bidMsgs.flatMap(m => m.portfolio_item_ids || [])));
+    if (portfolioIds.length > 0) {
+      const { data } = await supabase.from('portfolio_items').select('*').in('id', portfolioIds);
+      if (data) setBidPortfolioById(prev => ({ ...prev, ...Object.fromEntries((data as PortfolioItem[]).map(p => [p.id, p])) }));
+    }
   }, []);
 
   const loadChats = useCallback(async () => {
@@ -295,36 +301,90 @@ export function ChatScreen({ targetUserId }: { targetUserId?: string }) {
                     const meta = msg.metadata as BidMessageMetadata;
                     const status = bidStatuses[meta.bid_id];
                     const canAccept = profile?.id === meta.employer_id && status === 'pending';
+                    const sender = isOwn ? profile : activeChat.otherUser;
+                    const attached = (meta.portfolio_item_ids || []).map(id => bidPortfolioById[id]).filter(Boolean);
                     return (
-                      <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-fade-in`}>
-                        <div className="max-w-[85%] sm:max-w-[70%] card p-4 border-brand-200 dark:border-brand-800">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-8 h-8 rounded-lg bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center shrink-0">
-                              <Gavel className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                      <div key={msg.id} className="flex justify-center animate-fade-in">
+                        <div className="w-full card p-5 border-brand-200 dark:border-brand-800">
+                          <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                            <Avatar src={sender?.avatar_url ?? undefined} name={sender?.display_name || sender?.email} size={40} />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">{sender?.display_name || sender?.full_name}</div>
+                              <div className="text-xs text-slate-500 flex items-center gap-1"><Gavel className="w-3 h-3" /> {t('board.newBid.title')}</div>
                             </div>
-                            <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">{meta.project_title}</div>
+                            <div className="text-[11px] text-slate-400 shrink-0">{formatDateTime(msg.created_at)}</div>
                           </div>
-                          <div className="flex items-center gap-3 text-sm mb-3">
-                            <span className="font-bold text-brand-600 dark:text-brand-400">{formatPrice(meta.bid_amount)}</span>
-                            <span className="text-xs text-slate-500 flex items-center gap-1"><Clock className="w-3 h-3" />{meta.delivery_days} {t('board.days')}</span>
+
+                          <div className="text-base font-bold text-slate-900 dark:text-white mb-3">{meta.project_title}</div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
+                              <div className="text-xs text-slate-500 mb-0.5">{t('board.yourPrice')}</div>
+                              <div className="font-bold text-brand-600 dark:text-brand-400">{formatPrice(meta.bid_amount)}</div>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
+                              <div className="text-xs text-slate-500 mb-0.5 flex items-center justify-center gap-1"><Clock className="w-3 h-3" />{t('board.duration')}</div>
+                              <div className="font-bold text-slate-900 dark:text-white">{meta.delivery_days} {t('board.days')}</div>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
+                              <div className="text-xs text-slate-500 mb-0.5">{t('companies.status')}</div>
+                              <div className="font-bold text-slate-900 dark:text-white">
+                                {status === 'accepted' ? t('board.accepted') : status === 'rejected' ? t('companies.status.rejected') : t('companies.status.pending')}
+                              </div>
+                            </div>
                           </div>
+
+                          {meta.message && (
+                            <div className="mb-4">
+                              <div className="text-xs font-medium text-slate-500 mb-1">{t('board.coverLetter')}</div>
+                              <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3">{meta.message}</p>
+                            </div>
+                          )}
+
+                          {attached.length > 0 && (
+                            <div className="mb-4">
+                              <div className="text-xs font-medium text-slate-500 mb-2 flex items-center gap-1"><Briefcase className="w-3 h-3" /> {t('portfolio.attached')}</div>
+                              <div className="flex gap-2 flex-wrap">
+                                {attached.map(p => (
+                                  <a
+                                    key={p.id}
+                                    href={p.link_url || undefined}
+                                    target={p.link_url ? '_blank' : undefined}
+                                    rel="noopener noreferrer"
+                                    className="w-20"
+                                    title={p.title}
+                                  >
+                                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative">
+                                      {p.image_urls[0] ? (
+                                        <img src={p.image_urls[0]} alt={p.title} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <Briefcase className="w-6 h-6 text-slate-300 dark:text-slate-600" />
+                                      )}
+                                      {p.link_url && <ExternalLink className="w-3.5 h-3.5 text-white absolute bottom-1 right-1 drop-shadow" />}
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 truncate mt-0.5">{p.title}</div>
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
                           {status === 'accepted' ? (
-                            <span className="badge bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400 gap-1"><Check className="w-3 h-3" /> {t('board.accepted')}</span>
+                            <span className="badge bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400 gap-1"><Check className="w-3.5 h-3.5" /> {t('board.accepted')}</span>
                           ) : status === 'rejected' ? (
                             <span className="badge bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">{t('companies.status.rejected')}</span>
                           ) : canAccept ? (
                             <button
                               onClick={() => handleAcceptBid(meta)}
                               disabled={acceptingBidId === meta.bid_id}
-                              className="btn-primary !py-1.5 text-xs w-full"
+                              className="btn-primary !py-2 text-sm w-full sm:w-auto"
                             >
-                              {acceptingBidId === meta.bid_id ? <Spinner className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
+                              {acceptingBidId === meta.bid_id ? <Spinner className="w-4 h-4" /> : <Check className="w-4 h-4" />}
                               {t('board.accept')}
                             </button>
                           ) : (
                             <span className="badge bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400">{t('companies.status.pending')}</span>
                           )}
-                          <div className="text-[10px] text-slate-400 mt-2">{formatDateTime(msg.created_at)}</div>
                         </div>
                       </div>
                     );

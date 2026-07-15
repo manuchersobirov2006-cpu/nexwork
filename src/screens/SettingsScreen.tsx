@@ -4,6 +4,7 @@ import { useTheme } from '../lib/theme';
 import { LANGUAGES, getAvatarUrl } from '../lib/constants';
 import { Avatar, Badge, Toggle, Spinner } from '../components/ui';
 import { t } from '../lib/i18n';
+import { formatPrice } from '../lib/format';
 import type { Language } from '../lib/i18n';
 import {
   User, Bell, Shield, Crown,
@@ -222,7 +223,7 @@ export function SettingsScreen() {
                     <DollarSign className="w-5 h-5 text-success-600" />
                     <span className="text-sm font-medium text-slate-900 dark:text-white">{t('settings.balance')}</span>
                   </div>
-                  <span className="text-lg font-bold text-slate-900 dark:text-white">${profile.balance.toFixed(2)}</span>
+                  <span className="text-lg font-bold text-slate-900 dark:text-white">{formatPrice(profile.balance)}</span>
                 </div>
               </div>
               <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">

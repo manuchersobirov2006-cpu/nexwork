@@ -138,7 +138,7 @@ export function GigManagement({ adminId }: { adminId: string }) {
             <div><label className="label">Заголовок</label><input className="input" value={editForm.title ?? ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
             <div><label className="label">Описание</label><textarea className="input" rows={4} value={editForm.description ?? ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} /></div>
             <div className="grid sm:grid-cols-3 gap-4">
-              <div><label className="label">Цена ($)</label><input type="number" className="input" value={editForm.price ?? 0} onChange={e => setEditForm({ ...editForm, price: Number(e.target.value) })} /></div>
+              <div><label className="label">Цена (сум)</label><input type="number" className="input" value={editForm.price ?? 0} onChange={e => setEditForm({ ...editForm, price: Number(e.target.value) })} /></div>
               <div><label className="label">Категория</label><input className="input" value={editForm.category ?? ''} onChange={e => setEditForm({ ...editForm, category: e.target.value })} /></div>
               <div><label className="label">Статус</label>
                 <select className="input" value={editForm.status ?? 'active'} onChange={e => setEditForm({ ...editForm, status: e.target.value as Gig['status'] })}>
@@ -298,7 +298,7 @@ export function ProjectManagement({ adminId }: { adminId: string }) {
             <div><label className="label">Заголовок</label><input className="input" value={editForm.title ?? ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
             <div><label className="label">Описание</label><textarea className="input" rows={4} value={editForm.description ?? ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} /></div>
             <div className="grid sm:grid-cols-3 gap-4">
-              <div><label className="label">Бюджет ($)</label><input type="number" className="input" value={editForm.budget_fixed ?? 0} onChange={e => setEditForm({ ...editForm, budget_fixed: Number(e.target.value) })} /></div>
+              <div><label className="label">Бюджет (сум)</label><input type="number" className="input" value={editForm.budget_fixed ?? 0} onChange={e => setEditForm({ ...editForm, budget_fixed: Number(e.target.value) })} /></div>
               <div><label className="label">Категория</label><input className="input" value={editForm.category ?? ''} onChange={e => setEditForm({ ...editForm, category: e.target.value })} /></div>
               <div><label className="label">Статус</label>
                 <select className="input" value={editForm.status ?? 'open'} onChange={e => setEditForm({ ...editForm, status: e.target.value as Project['status'] })}>

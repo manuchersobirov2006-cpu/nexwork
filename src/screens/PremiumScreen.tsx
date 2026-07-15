@@ -3,6 +3,7 @@ import { useTheme } from '../lib/theme';
 import { PREMIUM_PLANS } from '../lib/constants';
 import { Badge } from '../components/ui';
 import { t } from '../lib/i18n';
+import { formatPrice } from '../lib/format';
 import { Crown, Check, Zap, TrendingUp, Shield, Star } from 'lucide-react';
 
 const NEXWORK_TG = 'https://t.me/nexwork_uz';
@@ -32,7 +33,7 @@ export function PremiumScreen() {
   const planFeatures = (plan: typeof PREMIUM_PLANS[number]) => (language === 'en' ? plan.featuresEn : language === 'uz' ? plan.featuresUz : plan.features);
 
   const handleSelectPlan = (plan: typeof PREMIUM_PLANS[number]) => {
-    const message = `Здравствуйте! Хочу оформить тариф "${planName(plan)}" ($${plan.price}/${planPeriod(plan)}). Мой ID: ${profile.public_id}`;
+    const message = `Здравствуйте! Хочу оформить тариф "${planName(plan)}" (${formatPrice(plan.price)}/${planPeriod(plan)}). Мой ID: ${profile.public_id}`;
     const url = `${NEXWORK_TG}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
@@ -77,7 +78,7 @@ export function PremiumScreen() {
             <div className="text-center mb-6">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">{planName(plan)}</h3>
               <div className="mt-3 flex items-baseline justify-center gap-1">
-                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">${plan.price}</span>
+                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">{formatPrice(plan.price)}</span>
                 <span className="text-slate-500">/{planPeriod(plan)}</span>
               </div>
             </div>

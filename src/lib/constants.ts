@@ -144,7 +144,7 @@ export const PREMIUM_PLANS = [
 export const LANGUAGES = [
   { code: 'ru', label: 'Русский', flag: '🇷🇺' },
   { code: 'uz', label: 'O\'zbek', flag: '🇺🇿' },
-  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'en', label: 'English', flag: 'EN' },
 ];
 
 export const ORDER_STATUS_LABELS: Record<string, { ru: string; color: string }> = {

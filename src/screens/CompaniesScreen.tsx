@@ -9,7 +9,7 @@ import { t } from '../lib/i18n';
 import type { Company, Job, JobApplication, Profile } from '../lib/types';
 import {
   Building2, Plus, MapPin, Globe, Users, Search,
-  Briefcase, Eye, Check, ExternalLink, Send, UserCheck, X, AlertCircle
+  Briefcase, Eye, Check, ExternalLink, Send, UserCheck, X, AlertCircle, Wallet
 } from 'lucide-react';
 
 const COMPANY_LOGOS = [
@@ -352,7 +352,7 @@ function JobDetailModal({ job, onClose, onApplied }: { job: Job; onClose: () => 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           {job.location && <div className="card p-3 text-center"><MapPin className="w-5 h-5 text-brand-600 mx-auto mb-1" /><div className="text-xs text-slate-500">{t('companies.location')}</div><div className="font-bold text-slate-900 dark:text-white text-sm">{job.location}</div></div>}
           <div className="card p-3 text-center"><Briefcase className="w-5 h-5 text-brand-600 mx-auto mb-1" /><div className="text-xs text-slate-500">{t('companies.type')}</div><div className="font-bold text-slate-900 dark:text-white text-sm">{jobTypeLabel(job.job_type)}</div></div>
-          {(job.salary_min || job.salary_max) && <div className="card p-3 text-center"><span className="block text-success-600 font-bold text-sm mb-0.5">$</span><div className="text-xs text-slate-500">{t('companies.salary')}</div><div className="font-bold text-slate-900 dark:text-white text-sm">{job.salary_min && job.salary_max ? `${formatPrice(job.salary_min)}—${formatPrice(job.salary_max)}` : formatPrice(job.salary_min || job.salary_max || 0)}</div></div>}
+          {(job.salary_min || job.salary_max) && <div className="card p-3 text-center"><Wallet className="w-5 h-5 text-success-600 mx-auto mb-1" /><div className="text-xs text-slate-500">{t('companies.salary')}</div><div className="font-bold text-slate-900 dark:text-white text-sm">{job.salary_min && job.salary_max ? `${formatPrice(job.salary_min)}—${formatPrice(job.salary_max)}` : formatPrice(job.salary_min || job.salary_max || 0)}</div></div>}
           <div className="card p-3 text-center"><Eye className="w-5 h-5 text-brand-600 mx-auto mb-1" /><div className="text-xs text-slate-500">{t('companies.views')}</div><div className="font-bold text-slate-900 dark:text-white text-sm">{job.views}</div></div>
         </div>
         <h4 className="font-semibold text-slate-900 dark:text-white mb-2">{t('companies.description')}</h4>
