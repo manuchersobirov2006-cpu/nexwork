@@ -13,7 +13,7 @@ import { useTheme } from '../lib/theme';
 import { t } from '../lib/i18n';
 import { isTopSpecialist } from '../lib/freelancerLevel';
 import type { Gig, Profile } from '../lib/types';
-import { Search, SlidersHorizontal, Tag, Clock, ShieldCheck, Plus } from 'lucide-react';
+import { Search, SlidersHorizontal, Tag, Clock, ShieldCheck, Plus, Pencil, Trash2, Pause, Play } from 'lucide-react';
 
 function getGigCover(gig: Gig): string | null {
   if (gig.image_urls && gig.image_urls.length > 0) return gig.image_urls[0];
@@ -33,10 +33,12 @@ export function GigsScreen() {
   const [orderingGig, setOrderingGig] = useState<Gig | null>(null);
   const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [editingGig, setEditingGig] = useState<Gig | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    let query = supabase.from('gigs').select('*, seller:seller_id(*)').eq('status', 'active');
+    let query = supabase.from('gigs').select('*, seller:seller_id(*)').neq('status', 'deleted');
+    query = profile ? query.or(`status.eq.active,seller_id.eq.${profile.id}`) : query.eq('status', 'active');
     if (category !== 'all') query = query.eq('category', category);
     if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
     if (sortBy === 'newest') query = query.order('created_at', { ascending: false });
@@ -58,9 +60,23 @@ export function GigsScreen() {
       setGigs(list);
     }
     setLoading(false);
-  }, [category, search, sortBy]);
+  }, [category, search, sortBy, profile]);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleDelete = async (e: React.MouseEvent, gig: Gig) => {
+    e.stopPropagation();
+    if (!window.confirm(t('portfolio.myGigs.deleteConfirm'))) return;
+    await supabase.from('gigs').update({ status: 'deleted' }).eq('id', gig.id);
+    setGigs(prev => prev.filter(g => g.id !== gig.id));
+  };
+
+  const handleToggleActive = async (e: React.MouseEvent, gig: Gig) => {
+    e.stopPropagation();
+    const nextStatus = gig.status === 'active' ? 'paused' : 'active';
+    await supabase.from('gigs').update({ status: nextStatus }).eq('id', gig.id);
+    setGigs(prev => prev.map(g => g.id === gig.id ? { ...g, status: nextStatus } : g));
+  };
 
   const catLabel = (key: string) => {
     const c = CATEGORIES.find(c => c.key === key);
@@ -126,11 +142,12 @@ export function GigsScreen() {
           {gigs.map(gig => {
             const seller = gig.seller as unknown as Profile | undefined;
             const cover = getGigCover(gig);
+            const isOwn = profile?.id === gig.seller_id;
             return (
               <div
                 key={gig.id}
-                onClick={() => { if (profile && profile.id !== gig.seller_id) setOrderingGig(gig); }}
-                className="card overflow-hidden hover:shadow-card-hover transition-all duration-200 cursor-pointer group animate-fade-in"
+                onClick={() => { if (profile && !isOwn) setOrderingGig(gig); }}
+                className={`card overflow-hidden hover:shadow-card-hover transition-all duration-200 group animate-fade-in ${isOwn ? '' : 'cursor-pointer'}`}
               >
                 <div className="relative h-36 bg-slate-100 dark:bg-[#161c2b] overflow-hidden">
                   {cover ? (
@@ -143,6 +160,13 @@ export function GigsScreen() {
                   <div className="absolute bottom-2 left-2">
                     <Badge color="blue" className="backdrop-blur-sm bg-white/90 dark:bg-[#10141f]/90">{catLabel(gig.category)}</Badge>
                   </div>
+                  {isOwn && (
+                    <div className="absolute top-2 right-2 flex items-center gap-1">
+                      <Badge color={gig.status === 'active' ? 'green' : 'slate'} className="backdrop-blur-sm bg-white/90 dark:bg-[#10141f]/90">
+                        {gig.status === 'active' ? t('portfolio.myGigs.status.active') : t('portfolio.myGigs.status.paused')}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
                 <div className="p-4">
                   <button
@@ -166,7 +190,19 @@ export function GigsScreen() {
                       <div className="text-[11px] text-slate-400">{t('gigs.from')}</div>
                       <div className="text-lg font-bold text-brand-600 dark:text-brand-400">{formatPrice(gig.price)}</div>
                     </div>
-                    {profile && profile.id !== gig.seller_id && (
+                    {isOwn ? (
+                      <div className="flex items-center gap-1">
+                        <button onClick={(e) => handleToggleActive(e, gig)} className="btn-ghost !p-1.5" title={gig.status === 'active' ? t('portfolio.myGigs.pause') : t('portfolio.myGigs.activate')}>
+                          {gig.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); setEditingGig(gig); }} className="btn-ghost !p-1.5" title={t('portfolio.myGigs.edit')}>
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button onClick={(e) => handleDelete(e, gig)} className="btn-ghost !p-1.5 text-error-600" title={t('portfolio.myGigs.delete')}>
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : profile && (
                       <button onClick={(e) => { e.stopPropagation(); setOrderingGig(gig); }} className="btn-secondary !px-3 !py-1.5 text-xs">
                         {t('gigs.details')}
                       </button>
@@ -193,6 +229,15 @@ export function GigsScreen() {
           gig={null}
           onClose={() => setShowCreate(false)}
           onSaved={() => { setShowCreate(false); load(); }}
+        />
+      )}
+
+      {editingGig && profile && (
+        <GigModal
+          userId={profile.id}
+          gig={editingGig}
+          onClose={() => setEditingGig(null)}
+          onSaved={() => { setEditingGig(null); load(); }}
         />
       )}
     </div>
