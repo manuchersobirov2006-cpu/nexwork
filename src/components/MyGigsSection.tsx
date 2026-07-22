@@ -106,7 +106,7 @@ export function MyGigsSection({ profile }: { profile: Profile }) {
   );
 }
 
-function GigModal({ userId, gig, onClose, onSaved }: {
+export function GigModal({ userId, gig, onClose, onSaved }: {
   userId: string;
   gig: Gig | null;
   onClose: () => void;

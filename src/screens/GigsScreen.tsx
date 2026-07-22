@@ -6,11 +6,14 @@ import { formatPrice } from '../lib/format';
 import { Avatar, Badge, LevelBadge, Stars, EmptyState, SkeletonCard } from '../components/ui';
 import { GigOrderModal } from '../components/GigOrderModal';
 import { UserProfileModal } from '../components/UserProfileModal';
+import { GigModal } from '../components/MyGigsSection';
+import { needsIdentityVerification } from '../lib/verification';
+import { VerificationRequiredNotice } from '../components/VerificationRequiredNotice';
 import { useTheme } from '../lib/theme';
 import { t } from '../lib/i18n';
 import { isTopSpecialist } from '../lib/freelancerLevel';
 import type { Gig, Profile } from '../lib/types';
-import { Search, SlidersHorizontal, Tag, Clock, ShieldCheck } from 'lucide-react';
+import { Search, SlidersHorizontal, Tag, Clock, ShieldCheck, Plus } from 'lucide-react';
 
 function getGigCover(gig: Gig): string | null {
   if (gig.image_urls && gig.image_urls.length > 0) return gig.image_urls[0];
@@ -29,6 +32,7 @@ export function GigsScreen() {
   const [showFilters, setShowFilters] = useState(false);
   const [orderingGig, setOrderingGig] = useState<Gig | null>(null);
   const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -59,7 +63,16 @@ export function GigsScreen() {
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">{t('gigs.title')}</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">{t('gigs.subtitle')}</p>
         </div>
+        {profile?.role === 'freelancer' && !needsIdentityVerification(profile) && (
+          <button onClick={() => setShowCreate(true)} className="btn-primary shrink-0">
+            <Plus className="w-4 h-4" /> {t('gigs.create')}
+          </button>
+        )}
       </div>
+
+      {profile?.role === 'freelancer' && needsIdentityVerification(profile) && (
+        <div className="mb-6"><VerificationRequiredNotice messageKey="verify.required.gig" /></div>
+      )}
 
       <div className="card p-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
@@ -160,6 +173,15 @@ export function GigsScreen() {
 
       {viewingProfileId && (
         <UserProfileModal userId={viewingProfileId} onClose={() => setViewingProfileId(null)} />
+      )}
+
+      {showCreate && profile && (
+        <GigModal
+          userId={profile.id}
+          gig={null}
+          onClose={() => setShowCreate(false)}
+          onSaved={() => { setShowCreate(false); load(); }}
+        />
       )}
     </div>
   );
