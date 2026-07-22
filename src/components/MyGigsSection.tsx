@@ -9,7 +9,7 @@ import { GigImageUpload } from './GigImageUpload';
 import { needsIdentityVerification } from '../lib/verification';
 import { VerificationRequiredNotice } from './VerificationRequiredNotice';
 import type { Gig, GigExtra, Profile } from '../lib/types';
-import { Plus, Pencil, Trash2, Tag, X as XIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, Tag, X as XIcon, Check } from 'lucide-react';
 
 export function MyGigsSection({ profile }: { profile: Profile }) {
   const [gigs, setGigs] = useState<Gig[]>([]);
@@ -118,15 +118,14 @@ export function GigModal({ userId, gig, onClose, onSaved }: {
   const [category, setCategory] = useState(gig?.category || CATEGORIES[0].key);
   const [price, setPrice] = useState(gig?.price != null ? String(gig.price) : '');
   const [deliveryDays, setDeliveryDays] = useState(gig?.delivery_days ?? 3);
-  const [revisions, setRevisions] = useState(gig?.revisions ?? 1);
   const [tags, setTags] = useState<string[]>(gig?.tags || []);
   const [tagInput, setTagInput] = useState('');
   const [imageUrls, setImageUrls] = useState<string[]>(gig?.image_urls || []);
   const [saving, setSaving] = useState(false);
   const gigId = gig?.id || `temp-${userId.slice(0, 8)}-${Date.now()}`;
 
-  type TierForm = { enabled: boolean; title: string; description: string; price: string; deliveryDays: string; revisions: string };
-  const emptyTier = (defTitle: string): TierForm => ({ enabled: false, title: defTitle, description: '', price: '', deliveryDays: '', revisions: '1' });
+  type TierForm = { enabled: boolean; title: string; description: string; price: string; deliveryDays: string };
+  const emptyTier = (defTitle: string): TierForm => ({ enabled: false, title: defTitle, description: '', price: '', deliveryDays: '' });
   const [standard, setStandard] = useState<TierForm>(emptyTier(t('portfolio.myGigs.tier.standard')));
   const [premium, setPremium] = useState<TierForm>(emptyTier(t('portfolio.myGigs.tier.premium')));
 
@@ -143,9 +142,9 @@ export function GigModal({ userId, gig, onClose, onSaved }: {
         supabase.from('gig_extras').select('*').eq('gig_id', gig.id),
       ]);
       const std = pkgs?.find(p => p.tier === 'standard');
-      if (std) setStandard({ enabled: true, title: std.title, description: std.description || '', price: String(std.price), deliveryDays: String(std.delivery_days), revisions: String(std.revisions) });
+      if (std) setStandard({ enabled: true, title: std.title, description: std.description || '', price: String(std.price), deliveryDays: String(std.delivery_days) });
       const prem = pkgs?.find(p => p.tier === 'premium');
-      if (prem) setPremium({ enabled: true, title: prem.title, description: prem.description || '', price: String(prem.price), deliveryDays: String(prem.delivery_days), revisions: String(prem.revisions) });
+      if (prem) setPremium({ enabled: true, title: prem.title, description: prem.description || '', price: String(prem.price), deliveryDays: String(prem.delivery_days) });
       if (exts) setExtras((exts as GigExtra[]).map(e => ({ id: e.id, title: e.title, price: String(e.price), deliveryDaysDelta: String(e.delivery_days_delta) })));
     })();
   }, [gig]);
@@ -169,7 +168,7 @@ export function GigModal({ userId, gig, onClose, onSaved }: {
     setSaving(true);
     const payload = {
       title: title.trim(), description: description.trim(), category, price: priceNum,
-      delivery_days: deliveryDays, revisions, tags, image_urls: imageUrls,
+      delivery_days: deliveryDays, tags, image_urls: imageUrls,
     };
     let savedGigId = gig?.id;
     if (gig) {
@@ -182,14 +181,14 @@ export function GigModal({ userId, gig, onClose, onSaved }: {
     if (savedGigId) {
       await supabase.from('gig_packages').upsert({
         gig_id: savedGigId, tier: 'basic', title: t('portfolio.myGigs.tier.basic'),
-        description: description.trim(), price: priceNum, delivery_days: deliveryDays, revisions,
+        description: description.trim(), price: priceNum, delivery_days: deliveryDays,
       }, { onConflict: 'gig_id,tier' });
 
       if (standard.enabled && standard.price && Number(standard.price) > 0 && standard.deliveryDays) {
         await supabase.from('gig_packages').upsert({
           gig_id: savedGigId, tier: 'standard', title: standard.title.trim() || t('portfolio.myGigs.tier.standard'),
           description: standard.description.trim() || null, price: Number(standard.price),
-          delivery_days: Number(standard.deliveryDays), revisions: Number(standard.revisions) || 0,
+          delivery_days: Number(standard.deliveryDays),
         }, { onConflict: 'gig_id,tier' });
       } else {
         await supabase.from('gig_packages').delete().eq('gig_id', savedGigId).eq('tier', 'standard');
@@ -199,7 +198,7 @@ export function GigModal({ userId, gig, onClose, onSaved }: {
         await supabase.from('gig_packages').upsert({
           gig_id: savedGigId, tier: 'premium', title: premium.title.trim() || t('portfolio.myGigs.tier.premium'),
           description: premium.description.trim() || null, price: Number(premium.price),
-          delivery_days: Number(premium.deliveryDays), revisions: Number(premium.revisions) || 0,
+          delivery_days: Number(premium.deliveryDays),
         }, { onConflict: 'gig_id,tier' });
       } else {
         await supabase.from('gig_packages').delete().eq('gig_id', savedGigId).eq('tier', 'premium');
@@ -252,15 +251,9 @@ export function GigModal({ userId, gig, onClose, onSaved }: {
             />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label">{t('gigs.deliveryDays')}</label>
-            <input type="number" value={deliveryDays} onChange={e => setDeliveryDays(Number(e.target.value))} min={1} className="input" />
-          </div>
-          <div>
-            <label className="label">{t('gigs.revisionsLabel')}</label>
-            <input type="number" value={revisions} onChange={e => setRevisions(Number(e.target.value))} min={0} className="input" />
-          </div>
+        <div>
+          <label className="label">{t('gigs.deliveryDays')}</label>
+          <input type="number" value={deliveryDays} onChange={e => setDeliveryDays(Number(e.target.value))} min={1} className="input" />
         </div>
         <div>
           <label className="label">{t('gigs.tagsLabel')}</label>
@@ -283,8 +276,17 @@ export function GigModal({ userId, gig, onClose, onSaved }: {
           <div className="space-y-3">
             {([['standard', standard, setStandard], ['premium', premium, setPremium]] as const).map(([key, tier, setTier]) => (
               <div key={key} className="p-3 bg-slate-50 dark:bg-[#161c2b]/50 rounded-xl">
-                <label className="flex items-center gap-2 cursor-pointer mb-2">
-                  <input type="checkbox" checked={tier.enabled} onChange={e => setTier({ ...tier, enabled: e.target.checked })} className="w-4 h-4 rounded" />
+                <label className="group flex items-center gap-2.5 cursor-pointer mb-2 select-none">
+                  <span className="relative w-5 h-5 shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={tier.enabled}
+                      onChange={e => setTier({ ...tier, enabled: e.target.checked })}
+                      className="peer sr-only"
+                    />
+                    <span className="absolute inset-0 rounded-md border-2 border-slate-300 dark:border-[#2c3549] bg-white dark:bg-[#161c2b] transition-all duration-200 peer-checked:border-brand-500 peer-checked:bg-brand-500 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-400/50 group-hover:border-brand-400" />
+                    <Check className="absolute inset-0 m-auto w-3.5 h-3.5 text-white scale-0 peer-checked:scale-100 transition-transform duration-200" strokeWidth={3} />
+                  </span>
                   <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
                     {key === 'standard' ? t('portfolio.myGigs.tier.standard') : t('portfolio.myGigs.tier.premium')}
                   </span>
@@ -294,7 +296,6 @@ export function GigModal({ userId, gig, onClose, onSaved }: {
                     <input type="text" value={tier.title} onChange={e => setTier({ ...tier, title: e.target.value })} placeholder={t('portfolio.myGigs.tier.name')} className="input input-sm col-span-3" />
                     <input type="text" inputMode="numeric" value={tier.price} onChange={e => setTier({ ...tier, price: e.target.value.replace(/\D/g, '') })} placeholder={t('gigs.priceLabel')} className="input input-sm" />
                     <input type="text" inputMode="numeric" value={tier.deliveryDays} onChange={e => setTier({ ...tier, deliveryDays: e.target.value.replace(/\D/g, '') })} placeholder={t('gigs.deliveryDays')} className="input input-sm" />
-                    <input type="text" inputMode="numeric" value={tier.revisions} onChange={e => setTier({ ...tier, revisions: e.target.value.replace(/\D/g, '') })} placeholder={t('gigs.revisionsLabel')} className="input input-sm" />
                   </div>
                 )}
               </div>

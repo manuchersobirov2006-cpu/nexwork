@@ -5,7 +5,7 @@ import { t } from '../lib/i18n';
 import { formatPrice } from '../lib/format';
 import { Modal, Spinner } from './ui';
 import type { Gig, GigPackage, GigExtra } from '../lib/types';
-import { Check, ShoppingCart, Clock, RotateCcw } from 'lucide-react';
+import { Check, ShoppingCart, Clock } from 'lucide-react';
 
 const TIER_ORDER: GigPackage['tier'][] = ['basic', 'standard', 'premium'];
 
@@ -103,7 +103,6 @@ export function GigOrderModal({ gig, onClose, onOrdered }: {
                 {activePackage.description && <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{activePackage.description}</p>}
                 <div className="flex items-center gap-4 text-sm">
                   <span className="flex items-center gap-1 text-slate-500"><Clock className="w-4 h-4" /> {activePackage.delivery_days} {t('gigs.days')}</span>
-                  <span className="flex items-center gap-1 text-slate-500"><RotateCcw className="w-4 h-4" /> {activePackage.revisions} {t('gigs.revisions')}</span>
                 </div>
               </div>
             )}
