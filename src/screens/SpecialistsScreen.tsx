@@ -38,6 +38,7 @@ export function SpecialistsScreen({ onOpenChat }: { onOpenChat?: (userId: string
     if (data) {
       let list = data as Profile[];
       if (sortBy === 'quality') list = [...list].sort((a, b) => getQualityScore(b) - getQualityScore(a));
+      list = [...list].sort((a, b) => Number(isTopSpecialist(b)) - Number(isTopSpecialist(a)));
       setSpecialists(list);
     }
     setLoading(false);

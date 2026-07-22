@@ -44,7 +44,19 @@ export function GigsScreen() {
     else if (sortBy === 'price_low') query = query.order('price', { ascending: true });
     else if (sortBy === 'price_high') query = query.order('price', { ascending: false });
     const { data } = await query.limit(60);
-    if (data) setGigs(data as Gig[]);
+    if (data) {
+      let list = data as Gig[];
+      if (sortBy === 'newest' || sortBy === 'popular') {
+        list = [...list].sort((a, b) => {
+          const aSeller = a.seller as unknown as Profile | undefined;
+          const bSeller = b.seller as unknown as Profile | undefined;
+          const aTop = aSeller ? isTopSpecialist(aSeller) : false;
+          const bTop = bSeller ? isTopSpecialist(bSeller) : false;
+          return Number(bTop) - Number(aTop);
+        });
+      }
+      setGigs(list);
+    }
     setLoading(false);
   }, [category, search, sortBy]);
 

@@ -48,7 +48,14 @@ export function GuestBrowseScreen({ initialQuery, initialCategory, initialMode }
     if (category !== 'all') query = query.eq('category', category);
     if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
     const { data } = await query.order('created_at', { ascending: false }).limit(50);
-    if (data) setGigs(data as Gig[]);
+    if (data) {
+      const list = [...(data as Gig[])].sort((a, b) => {
+        const aSeller = a.seller as unknown as Profile | undefined;
+        const bSeller = b.seller as unknown as Profile | undefined;
+        return Number(bSeller ? isTopSpecialist(bSeller) : false) - Number(aSeller ? isTopSpecialist(aSeller) : false);
+      });
+      setGigs(list);
+    }
     setLoading(false);
   }, [category, search]);
 
@@ -58,7 +65,10 @@ export function GuestBrowseScreen({ initialQuery, initialCategory, initialMode }
     if (category !== 'all') query = query.contains('categories', [category]);
     if (search) query = query.or(`display_name.ilike.%${search}%,full_name.ilike.%${search}%`);
     const { data } = await query.order('rating', { ascending: false }).limit(50);
-    if (data) setSpecialists(data as Profile[]);
+    if (data) {
+      const list = [...(data as Profile[])].sort((a, b) => Number(isTopSpecialist(b)) - Number(isTopSpecialist(a)));
+      setSpecialists(list);
+    }
     setLoading(false);
   }, [category, search]);
 
