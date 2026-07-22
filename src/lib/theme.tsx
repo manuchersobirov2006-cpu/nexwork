@@ -15,9 +15,9 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('NexWokr_theme') as Theme | null;
-    if (saved) return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const saved = localStorage.getItem('skillbridge_theme') as Theme | null;
+    if (saved === 'light' || saved === 'dark') return saved;
+    return 'light';
   });
 
   const [language, setLang] = useState<Language>(() => {

@@ -25,9 +25,12 @@ export function AnalyticsScreen() {
 
   useEffect(() => {
     if (!profile) return;
-    const isFreelancer = profile.role === 'freelancer';
     Promise.all([
-      supabase.from('orders').select('*, gig:gig_id(*)').eq(isFreelancer ? 'seller_id' : 'buyer_id', profile.id).order('created_at', { ascending: false }),
+      // A user can switch between the freelancer/employer role at any time,
+      // but past orders keep whichever side they were actually on — filter
+      // by that (not the current role toggle) or completed deals silently
+      // disappear from analytics the moment the role is switched.
+      supabase.from('orders').select('*, gig:gig_id(*)').or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`).order('created_at', { ascending: false }),
       supabase.from('gigs').select('*').eq('seller_id', profile.id),
       supabase.from('projects').select('*').eq('employer_id', profile.id),
       supabase.from('bids').select('*, project:project_id(*)').eq('freelancer_id', profile.id),
@@ -43,6 +46,9 @@ export function AnalyticsScreen() {
   if (loading) return <div className="flex items-center justify-center h-full"><Spinner className="w-8 h-8 text-brand-600" /></div>;
   if (!profile) return null;
 
+  // All orders this profile is party to, on either side — matches what
+  // "Последние заказы" already lists, so the summary cards and status
+  // breakdown never disagree with the order list itself.
   const completedOrders = orders.filter(o => o.status === 'completed');
   const activeOrders = orders.filter(o => o.status === 'active' || o.status === 'pending');
   const totalRevenue = completedOrders.reduce((sum, o) => sum + o.price, 0);
@@ -111,7 +117,7 @@ export function AnalyticsScreen() {
             {monthlyData.map((d, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-2">
                 <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">{d.value > 0 ? formatPrice(d.value) : ''}</div>
-                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-t-lg flex items-end" style={{ height: '140px' }}>
+                <div className="w-full bg-slate-100 dark:bg-[#161c2b] rounded-t-lg flex items-end" style={{ height: '140px' }}>
                   <div
                     className="w-full bg-gradient-to-t from-brand-600 to-accent-500 rounded-t-lg transition-all duration-500"
                     style={{ height: `${(d.value / maxRevenue) * 100}%`, minHeight: d.value > 0 ? '8px' : '0' }}
@@ -142,7 +148,7 @@ export function AnalyticsScreen() {
                     <span className="text-sm text-slate-700 dark:text-slate-300">{s.label}</span>
                     <span className="text-sm font-semibold text-slate-900 dark:text-white">{s.count}</span>
                   </div>
-                  <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+                  <div className="w-full h-2 bg-slate-100 dark:bg-[#161c2b] rounded-full">
                     <div className={`h-full ${s.color} rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
                   </div>
                 </div>
@@ -189,7 +195,7 @@ export function AnalyticsScreen() {
           ) : (
             <div className="space-y-2">
               {orders.slice(0, 6).map(order => (
-                <div key={order.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                <div key={order.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#161c2b]/50 rounded-xl">
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
                       {order.gig?.title || t('analytics.order')}
@@ -214,19 +220,19 @@ export function AnalyticsScreen() {
         <div className="card p-6 mt-6 animate-slide-up">
           <h3 className="font-bold text-slate-900 dark:text-white mb-4">{t('analytics.myBids')}</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="text-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+            <div className="text-center p-3 bg-slate-50 dark:bg-[#161c2b]/50 rounded-xl">
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{bids.length}</div>
               <div className="text-xs text-slate-500">{t('analytics.totalBids')}</div>
             </div>
-            <div className="text-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+            <div className="text-center p-3 bg-slate-50 dark:bg-[#161c2b]/50 rounded-xl">
               <div className="text-2xl font-bold text-success-600">{acceptedBids.length}</div>
               <div className="text-xs text-slate-500">{t('analytics.accepted')}</div>
             </div>
-            <div className="text-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+            <div className="text-center p-3 bg-slate-50 dark:bg-[#161c2b]/50 rounded-xl">
               <div className="text-2xl font-bold text-warning-600">{bids.filter(b => b.status === 'pending').length}</div>
               <div className="text-xs text-slate-500">{t('analytics.pending')}</div>
             </div>
-            <div className="text-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+            <div className="text-center p-3 bg-slate-50 dark:bg-[#161c2b]/50 rounded-xl">
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{((acceptedBids.length / bids.length) * 100).toFixed(0)}%</div>
               <div className="text-xs text-slate-500">{t('analytics.conversion')}</div>
             </div>

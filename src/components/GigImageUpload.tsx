@@ -155,7 +155,7 @@ export function GigImageUpload({
         onDrop={e => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
         onClick={() => fileInputRef.current?.click()}
         className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
-          dragging ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-300 dark:border-slate-700 hover:border-brand-400'
+          dragging ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-300 dark:border-[#232a3d] hover:border-brand-400'
         }`}
       >
         <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
@@ -182,8 +182,8 @@ export function GigImageUpload({
               onDragStart={() => handleDragStart(index)}
               onDragOver={e => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
-              className={`relative group rounded-xl overflow-hidden border-2 bg-slate-100 dark:bg-slate-800 ${
-                index === 0 ? 'border-brand-500' : 'border-slate-200 dark:border-slate-700'
+              className={`relative group rounded-xl overflow-hidden border-2 bg-slate-100 dark:bg-[#161c2b] ${
+                index === 0 ? 'border-brand-500' : 'border-slate-200 dark:border-[#232a3d]'
               } ${dragIndex === index ? 'opacity-40' : ''} cursor-move`}
               style={{ aspectRatio: '1' }}
             >

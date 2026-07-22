@@ -7,10 +7,14 @@ import { Avatar, Badge, Modal, EmptyState, SkeletonCard, Spinner, Stars } from '
 import { useTheme } from '../lib/theme';
 import { t } from '../lib/i18n';
 import { sendBidMessage, acceptBid as acceptBidHelper } from '../lib/bids';
+import { needsIdentityVerification } from '../lib/verification';
+import { VerificationRequiredNotice } from '../components/VerificationRequiredNotice';
+import { UserProfileModal } from '../components/UserProfileModal';
+import { translateText } from '../lib/translate';
 import type { Project, Bid, Profile, PortfolioItem } from '../lib/types';
 import {
   Plus, Clock, DollarSign, Users, Gavel,
-  Check, MessageSquare, Calendar, ExternalLink, Briefcase
+  Check, MessageSquare, Calendar, ExternalLink, Briefcase, Languages
 } from 'lucide-react';
 
 export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => void }) {
@@ -25,6 +29,7 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [myBids, setMyBids] = useState<Set<string>>(new Set());
+  const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
 
   const loadProjects = useCallback(async () => {
     setLoading(true);
@@ -62,10 +67,12 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">{t('board.title')}</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">{t('board.subtitle')}</p>
         </div>
-        <button onClick={() => setShowCreateModal(true)} className="btn-primary">
-          <Plus className="w-4 h-4" />
-          {t('board.postProject')}
-        </button>
+        {profile?.role === 'employer' && (
+          <button onClick={() => setShowCreateModal(true)} className="btn-primary">
+            <Plus className="w-4 h-4" />
+            {t('board.postProject')}
+          </button>
+        )}
       </div>
 
       <div className="card p-4 mb-6">
@@ -99,13 +106,16 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
             const hasBid = myBids.has(project.id);
             return (
               <div key={project.id} className="card p-5 hover:shadow-card-hover transition-all duration-200 cursor-pointer animate-fade-in" onClick={() => setSelectedProject(project)}>
-                <div className="flex items-center gap-2 mb-3">
+                <button
+                  onClick={(e) => { e.stopPropagation(); if (employer) setViewingProfileId(employer.id); }}
+                  className="flex items-center gap-2 mb-3 hover:opacity-80 transition-opacity"
+                >
                   <Avatar src={employer?.avatar_url ?? undefined} name={employer?.display_name || employer?.email} size={36} />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">{employer?.display_name || employer?.full_name || t('board.employer')}</div>
                     <div className="text-[11px] text-slate-400">{timeAgo(project.created_at)}</div>
                   </div>
-                </div>
+                </button>
                 <div className="flex items-start justify-between mb-3">
                   <Badge color="blue">{(() => { const c = CATEGORIES.find(c => c.key === project.category); if (!c) return project.category; return language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label; })()}</Badge>
                   {hasBid && <Badge color="green"><Check className="w-3 h-3" /> {t('board.bidPlaced')}</Badge>}
@@ -120,19 +130,19 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
                 )}
 
                 <div className="grid grid-cols-3 gap-2 text-center mb-3">
-                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2">
+                  <div className="bg-slate-50 dark:bg-[#161c2b]/50 rounded-lg p-2">
                     <DollarSign className="w-4 h-4 text-success-600 mx-auto mb-0.5" />
                     <div className="text-xs text-slate-500">{t('board.budget')}</div>
                     <div className="text-sm font-bold text-slate-900 dark:text-white">
-                      {project.budget_min && project.budget_max ? `${formatPrice(project.budget_min)}—${formatPrice(project.budget_max)}` : budget ? formatPrice(budget) : t('board.negotiable')}
+                      {project.budget_min && project.budget_max ? `${formatPrice(project.budget_min, project.currency)}—${formatPrice(project.budget_max, project.currency)}` : budget ? formatPrice(budget, project.currency) : t('board.negotiable')}
                     </div>
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2">
+                  <div className="bg-slate-50 dark:bg-[#161c2b]/50 rounded-lg p-2">
                     <Users className="w-4 h-4 text-brand-600 mx-auto mb-0.5" />
                     <div className="text-xs text-slate-500">{t('board.bids')}</div>
                     <div className="text-sm font-bold text-slate-900 dark:text-white">{project.bids_count}</div>
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2">
+                  <div className="bg-slate-50 dark:bg-[#161c2b]/50 rounded-lg p-2">
                     <Clock className="w-4 h-4 text-warning-600 mx-auto mb-0.5" />
                     <div className="text-xs text-slate-500">{t('board.deadline')}</div>
                     <div className="text-sm font-bold text-slate-900 dark:text-white">
@@ -154,24 +164,35 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
           hasBid={myBids.has(selectedProject.id)}
           onBidPlaced={() => { loadMyBids(); loadProjects(); }}
           onOpenChat={onOpenChat}
+          onViewProfile={setViewingProfileId}
         />
       )}
 
       {showCreateModal && (
         <CreateProjectModal onClose={() => setShowCreateModal(false)} onCreated={() => { setShowCreateModal(false); loadProjects(); }} />
       )}
+
+      {viewingProfileId && (
+        <UserProfileModal
+          userId={viewingProfileId}
+          onClose={() => setViewingProfileId(null)}
+          onMessage={(id) => { setViewingProfileId(null); onOpenChat?.(id); }}
+        />
+      )}
     </div>
   );
 }
 
-function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat }: {
+function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat, onViewProfile }: {
   project: Project;
   onClose: () => void;
   hasBid: boolean;
   onBidPlaced: () => void;
   onOpenChat?: (userId: string) => void;
+  onViewProfile: (userId: string) => void;
 }) {
-  const { profile } = useAuth();
+  const { profile, updateProfile } = useAuth();
+  const [switchingRole, setSwitchingRole] = useState(false);
   const [bids, setBids] = useState<Bid[]>([]);
   const [loadingBids, setLoadingBids] = useState(true);
   const [showBidForm, setShowBidForm] = useState(false);
@@ -185,6 +206,30 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
   const employer = project.employer as unknown as Profile | undefined;
   const isOwner = profile?.id === project.employer_id;
   const { language } = useTheme();
+
+  const [translatedTitle, setTranslatedTitle] = useState<string | null>(null);
+  const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const [translateError, setTranslateError] = useState<string | null>(null);
+
+  const handleTranslate = async () => {
+    setTranslating(true);
+    setTranslateError(null);
+    try {
+      const [tTitle, tDescription] = await Promise.all([
+        translateText(project.title, language),
+        translateText(project.description, language),
+      ]);
+      setTranslatedTitle(tTitle);
+      setTranslatedDescription(tDescription);
+    } catch {
+      setTranslateError(t('board.translateError'));
+    }
+    setTranslating(false);
+  };
+
+  const displayTitle = translatedTitle ?? project.title;
+  const displayDescription = translatedDescription ?? project.description;
 
   const loadBids = useCallback(async () => {
     const { data } = await supabase
@@ -218,7 +263,7 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
   };
 
   const handleBid = async () => {
-    if (!profile) return;
+    if (!profile || profile.role !== 'freelancer' || needsIdentityVerification(profile)) return;
     setSubmitting(true);
     const { data: newBid, error } = await supabase.from('bids').insert({
       project_id: project.id,
@@ -234,7 +279,7 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
         user_id: project.employer_id,
         type: 'bid',
         title: t('board.newBid.title'),
-        body: `${t('board.newBid.body')} "${project.title}" — ${formatPrice(bidAmount)}`,
+        body: `${t('board.newBid.body')} "${project.title}" — ${formatPrice(bidAmount, project.currency)}`,
         link: 'chat',
       });
       await sendBidMessage(
@@ -249,7 +294,7 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
           message: bidMessage,
           portfolio_item_ids: selectedPortfolioIds,
         },
-        `${t('board.newBid.body')} "${project.title}" — ${formatPrice(bidAmount)}`
+        `${t('board.newBid.body')} "${project.title}" — ${formatPrice(bidAmount, project.currency)}`
       );
     }
     setSubmitting(false);
@@ -259,7 +304,8 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
   };
 
   const handleAcceptBid = async (bid: Bid) => {
-    await acceptBidHelper(bid, t('board.bidAccepted.title'), `${t('board.bidAccepted.body')} "${project.title}"`);
+    if (!profile) return;
+    await acceptBidHelper(bid, profile.id, t('board.bidAccepted.title'), `${t('board.bidAccepted.body')} "${project.title}"`);
     loadBids();
   };
 
@@ -277,18 +323,33 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
   };
 
   return (
-    <Modal open onClose={onClose} size="lg" title={project.title}>
+    <Modal open onClose={onClose} size="lg" title={displayTitle}>
       <div className="p-6">
         <div className="flex items-center gap-3 mb-4">
-          <Avatar src={employer?.avatar_url ?? undefined} name={employer?.display_name || employer?.email} size={40} />
-          <div className="flex-1">
-            <div className="font-semibold text-slate-900 dark:text-white">{employer?.display_name || employer?.full_name}</div>
-            <div className="text-xs text-slate-500">{timeAgo(project.created_at)}</div>
-          </div>
+          <button onClick={() => employer && onViewProfile(employer.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity">
+            <Avatar src={employer?.avatar_url ?? undefined} name={employer?.display_name || employer?.email} size={40} />
+            <div className="min-w-0">
+              <div className="font-semibold text-slate-900 dark:text-white">{employer?.display_name || employer?.full_name}</div>
+              <div className="text-xs text-slate-500">{timeAgo(project.created_at)}</div>
+            </div>
+          </button>
           <Badge color="blue">{(() => { const c = CATEGORIES.find(c => c.key === project.category); if (!c) return ''; return language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label; })()}</Badge>
         </div>
 
-        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-4 whitespace-pre-wrap">{project.description}</p>
+        <div className="mb-2">
+          {translatedDescription ? (
+            <button onClick={() => { setTranslatedTitle(null); setTranslatedDescription(null); }} className="text-xs text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1">
+              <Languages className="w-3.5 h-3.5" /> {t('board.showOriginal')}
+            </button>
+          ) : (
+            <button onClick={handleTranslate} disabled={translating} className="text-xs text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1">
+              {translating ? <Spinner className="w-3.5 h-3.5" /> : <Languages className="w-3.5 h-3.5" />} {t('board.translate')}
+            </button>
+          )}
+          {translateError && <p className="text-xs text-error-600 mt-1">{translateError}</p>}
+        </div>
+
+        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-4 whitespace-pre-wrap">{displayDescription}</p>
 
         {project.skills_required.length > 0 && (
           <div className="mb-4">
@@ -302,7 +363,7 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
             <DollarSign className="w-5 h-5 text-success-600 mx-auto mb-1" />
             <div className="text-xs text-slate-500">{t('board.budget')}</div>
             <div className="font-bold text-slate-900 dark:text-white text-sm">
-              {project.budget_min && project.budget_max ? `${formatPrice(project.budget_min)}—${formatPrice(project.budget_max)}` : project.budget_fixed ? formatPrice(project.budget_fixed) : t('board.negotiable')}
+              {project.budget_min && project.budget_max ? `${formatPrice(project.budget_min, project.currency)}—${formatPrice(project.budget_max, project.currency)}` : project.budget_fixed ? formatPrice(project.budget_fixed, project.currency) : t('board.negotiable')}
             </div>
           </div>
           <div className="card p-3 text-center">
@@ -318,10 +379,24 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
         </div>
 
         {/* Bids section */}
-        <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-          <h4 className="font-semibold text-slate-900 dark:text-white mb-3">{t('board.bids')} ({bids.length})</h4>
+        <div className="border-t border-slate-200 dark:border-[#232a3d] pt-4">
+          <h4 className="font-semibold text-slate-900 dark:text-white mb-3">{t('board.bids')} ({isOwner ? bids.length : project.bids_count})</h4>
           {loadingBids ? (
             <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="skeleton h-16" />)}</div>
+          ) : !isOwner ? (
+            // Bids stay anonymous to everyone except the project owner —
+            // other freelancers only see how many people applied, not who
+            // or for how much, so they can't undercut each other. RLS
+            // already limits what non-owners can fetch from `bids` to just
+            // their own row, so the true total comes from
+            // projects.bids_count instead of bids.length here.
+            project.bids_count === 0 ? (
+              <p className="text-sm text-slate-500 text-center py-4">{t('board.noBidsYet')}</p>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 py-2">
+                <Users className="w-4 h-4 text-slate-400" /> {project.bids_count} {t('board.bidsAnonymous')}
+              </div>
+            )
           ) : bids.length === 0 ? (
             <p className="text-sm text-slate-500 text-center py-4">{t('board.noBidsYet')}</p>
           ) : (
@@ -332,14 +407,16 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
                 return (
                   <div key={bid.id} className="card p-3">
                     <div className="flex items-center gap-3">
-                      <Avatar src={freelancer?.avatar_url ?? undefined} name={freelancer?.display_name || freelancer?.email} size={36} />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-slate-900 dark:text-white text-sm truncate">{freelancer?.display_name || freelancer?.full_name}</div>
-                        {freelancer?.rating != null && freelancer?.rating > 0 && <div className="flex items-center gap-1"><Stars rating={freelancer.rating} size={10} /><span className="text-xs text-slate-500">{freelancer.rating}</span></div>}
-                        {bid.message && <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{bid.message}</p>}
-                      </div>
+                      <button onClick={() => freelancer && onViewProfile(freelancer.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity">
+                        <Avatar src={freelancer?.avatar_url ?? undefined} name={freelancer?.display_name || freelancer?.email} size={36} />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-slate-900 dark:text-white text-sm truncate">{freelancer?.display_name || freelancer?.full_name}</div>
+                          {freelancer?.rating != null && freelancer?.rating > 0 && <div className="flex items-center gap-1"><Stars rating={freelancer.rating} size={10} /><span className="text-xs text-slate-500">{freelancer.rating}</span></div>}
+                          {bid.message && <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{bid.message}</p>}
+                        </div>
+                      </button>
                       <div className="text-right shrink-0">
-                        <div className="font-bold text-brand-600 dark:text-brand-400">{formatPrice(bid.bid_amount)}</div>
+                        <div className="font-bold text-brand-600 dark:text-brand-400">{formatPrice(bid.bid_amount, project.currency)}</div>
                         <div className="text-xs text-slate-500">{bid.delivery_days} {t('board.days')}</div>
                       </div>
                       {isOwner && bid.status === 'pending' && (
@@ -351,7 +428,7 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
                       )}
                     </div>
                     {attached.length > 0 && (
-                      <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <div className="mt-2 pt-2 border-t border-slate-100 dark:border-[#232a3d]">
                         <div className="text-[11px] text-slate-400 mb-1.5 flex items-center gap-1"><Briefcase className="w-3 h-3" /> {t('portfolio.attached')}</div>
                         <div className="flex gap-2 overflow-x-auto scrollbar-thin">
                           {attached.map(p => (
@@ -363,7 +440,7 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
                               className={`shrink-0 w-16 ${p.link_url ? 'cursor-pointer' : 'cursor-default'}`}
                               title={p.title}
                             >
-                              <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative">
+                              <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 dark:bg-[#161c2b] flex items-center justify-center relative">
                                 {p.image_urls[0] ? (
                                   <img src={p.image_urls[0]} alt={p.title} className="w-full h-full object-cover" />
                                 ) : (
@@ -385,9 +462,30 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
         </div>
 
         {/* Bid form */}
-        {!isOwner && (
-          <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-            {hasBid && !showBidForm ? (
+        {!isOwner && profile?.role === 'employer' && (
+          <div className="border-t border-slate-200 dark:border-[#232a3d] pt-4">
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50">
+              <Gavel className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-slate-900 dark:text-white text-sm">{t('board.roleRequired.title')}</div>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">{t('board.roleRequired.message')}</p>
+                <button
+                  onClick={async () => { setSwitchingRole(true); await updateProfile({ role: 'freelancer' }); setSwitchingRole(false); }}
+                  disabled={switchingRole}
+                  className="btn-primary text-sm mt-3"
+                >
+                  {switchingRole ? <Spinner className="w-4 h-4" /> : null}
+                  {t('board.roleRequired.button')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {!isOwner && profile?.role === 'freelancer' && (
+          <div className="border-t border-slate-200 dark:border-[#232a3d] pt-4">
+            {needsIdentityVerification(profile) ? (
+              <VerificationRequiredNotice messageKey="verify.required.bid" />
+            ) : hasBid && !showBidForm ? (
               <div className="text-center py-2">
                 <Badge color="green"><Check className="w-3 h-3" /> {t('board.alreadyBid')}</Badge>
               </div>
@@ -420,13 +518,13 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat 
                             key={p.id}
                             type="button"
                             onClick={() => togglePortfolioItem(p.id)}
-                            className={`relative rounded-lg overflow-hidden border-2 transition-all ${selected ? 'border-brand-500' : 'border-slate-200 dark:border-slate-700'}`}
+                            className={`relative rounded-lg overflow-hidden border-2 transition-all ${selected ? 'border-brand-500' : 'border-slate-200 dark:border-[#232a3d]'}`}
                             style={{ aspectRatio: '1' }}
                           >
                             {p.image_urls[0] ? (
                               <img src={p.image_urls[0]} alt={p.title} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+                              <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-[#161c2b]">
                                 <Briefcase className="w-5 h-5 text-slate-300 dark:text-slate-600" />
                               </div>
                             )}
@@ -469,6 +567,7 @@ function CreateProjectModal({ onClose, onCreated }: { onClose: () => void; onCre
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('design');
   const [budgetType, setBudgetType] = useState<'range' | 'fixed'>('range');
+  const [currency, setCurrency] = useState<'UZS' | 'USD'>('UZS');
   const [budgetMin, setBudgetMin] = useState(100);
   const [budgetMax, setBudgetMax] = useState(500);
   const [budgetFixed, setBudgetFixed] = useState(300);
@@ -484,7 +583,7 @@ function CreateProjectModal({ onClose, onCreated }: { onClose: () => void; onCre
   };
 
   const handleCreate = async () => {
-    if (!profile || !title || !description) return;
+    if (!profile || profile.role !== 'employer' || !title || !description) return;
     setSaving(true);
     const deadline = new Date(Date.now() + durationDays * 86400000).toISOString();
     await supabase.from('projects').insert({
@@ -495,6 +594,7 @@ function CreateProjectModal({ onClose, onCreated }: { onClose: () => void; onCre
       budget_min: budgetType === 'range' ? budgetMin : null,
       budget_max: budgetType === 'range' ? budgetMax : null,
       budget_fixed: budgetType === 'fixed' ? budgetFixed : null,
+      currency,
       duration_days: durationDays,
       deadline,
       skills_required: skills,
@@ -531,9 +631,13 @@ function CreateProjectModal({ onClose, onCreated }: { onClose: () => void; onCre
         </div>
         <div>
           <label className="label">{t('board.budgetType')}</label>
-          <div className="flex gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2">
             <button onClick={() => setBudgetType('range')} className={budgetType === 'range' ? 'btn-primary' : 'btn-secondary'}>{t('board.budgetType.range')}</button>
             <button onClick={() => setBudgetType('fixed')} className={budgetType === 'fixed' ? 'btn-primary' : 'btn-secondary'}>{t('board.budgetType.fixed')}</button>
+            <select value={currency} onChange={e => setCurrency(e.target.value as 'UZS' | 'USD')} className="input !w-24 ml-auto">
+              <option value="UZS">UZS</option>
+              <option value="USD">USD</option>
+            </select>
           </div>
           {budgetType === 'range' ? (
             <div className="grid grid-cols-2 gap-3">
@@ -554,7 +658,7 @@ function CreateProjectModal({ onClose, onCreated }: { onClose: () => void; onCre
             {skills.map(s => <span key={s} className="badge bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">{s}<button onClick={() => setSkills(skills.filter(x => x !== s))} className="ml-1">×</button></span>)}
           </div>
         </div>
-        <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+        <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-[#232a3d]">
           <button onClick={onClose} className="btn-secondary">{t('board.cancel')}</button>
           <button onClick={handleCreate} disabled={saving || !title || !description} className="btn-primary">
             {saving && <Spinner className="w-4 h-4" />}

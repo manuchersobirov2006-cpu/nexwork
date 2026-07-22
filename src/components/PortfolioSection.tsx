@@ -57,7 +57,7 @@ export function PortfolioSection({ userId }: { userId: string }) {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map(item => (
             <div key={item.id} className="card overflow-hidden group">
-              <div className="relative h-32 bg-slate-100 dark:bg-slate-800">
+              <div className="relative h-32 bg-slate-100 dark:bg-[#161c2b]">
                 {item.image_urls[0] ? (
                   <img src={item.image_urls[0]} alt={item.title} className="w-full h-full object-cover" />
                 ) : (
@@ -66,10 +66,10 @@ export function PortfolioSection({ userId }: { userId: string }) {
                   </div>
                 )}
                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => { setEditingItem(item); setShowModal(true); }} className="w-7 h-7 rounded-full bg-white/90 dark:bg-slate-900/90 flex items-center justify-center">
+                  <button onClick={() => { setEditingItem(item); setShowModal(true); }} className="w-7 h-7 rounded-full bg-white/90 dark:bg-[#10141f]/90 flex items-center justify-center">
                     <Pencil className="w-3.5 h-3.5 text-slate-700 dark:text-slate-200" />
                   </button>
-                  <button onClick={() => handleDelete(item)} className="w-7 h-7 rounded-full bg-white/90 dark:bg-slate-900/90 flex items-center justify-center">
+                  <button onClick={() => handleDelete(item)} className="w-7 h-7 rounded-full bg-white/90 dark:bg-[#10141f]/90 flex items-center justify-center">
                     <Trash2 className="w-3.5 h-3.5 text-error-600" />
                   </button>
                 </div>
@@ -159,7 +159,7 @@ function PortfolioItemModal({ userId, item, onClose, onSaved }: {
           <p className="text-xs text-slate-400 mt-1">{t('portfolio.link.hint')}</p>
         </div>
         <GigImageUpload userId={userId} gigId={`portfolio/${itemId}`} existingImages={imageUrls} onImagesChange={setImageUrls} />
-        <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+        <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-[#232a3d]">
           <button onClick={onClose} className="btn-secondary">{t('portfolio.cancel')}</button>
           <button onClick={handleSave} disabled={saving || !title.trim()} className="btn-primary">
             {saving && <Spinner className="w-4 h-4" />} {t('portfolio.save')}

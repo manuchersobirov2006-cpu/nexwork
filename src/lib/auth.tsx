@@ -18,11 +18,26 @@ interface AuthContextValue {
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: string | null }>;
   completeOnboarding: () => void;
   setRoleAndComplete: (role: 'freelancer' | 'employer') => Promise<void>;
+  isPasswordRecovery: boolean;
+  requestPasswordReset: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: string | null }>;
+  clearPasswordRecovery: () => void;
+  needsMfaVerification: boolean;
+  verifyMfaChallenge: (code: string) => Promise<{ error: string | null }>;
+  mfaEnroll: () => Promise<{ factorId: string | null; qrCode: string | null; secret: string | null; error: string | null }>;
+  mfaVerifyEnrollment: (factorId: string, code: string) => Promise<{ error: string | null }>;
+  mfaUnenroll: (factorId: string) => Promise<{ error: string | null }>;
+  mfaListFactors: () => Promise<{ id: string; status: string }[]>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const ONBOARDING_KEY = (uid: string) => `NexWork_onboarding_done_${uid}`;
+export const DEVICE_REMEMBERED_KEY = 'NexWork_device_remembered';
+
+function markDeviceRemembered() {
+  localStorage.setItem(DEVICE_REMEMBERED_KEY, '1');
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -31,6 +46,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [needsRoleSelection, setNeedsRoleSelection] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [needsMfaVerification, setNeedsMfaVerification] = useState(false);
+
+  const checkMfaLevel = useCallback(async () => {
+    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (data && data.nextLevel === 'aal2' && data.currentLevel !== 'aal2') {
+      setNeedsMfaVerification(true);
+    } else {
+      setNeedsMfaVerification(false);
+    }
+  }, []);
 
   const loadProfile = useCallback(async (uid: string) => {
     const { data, error } = await supabase
@@ -65,16 +91,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        markDeviceRemembered();
+        checkMfaLevel();
         loadProfile(session.user.id).finally(() => mounted && setLoading(false));
       } else {
         setLoading(false);
       }
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') setIsPasswordRecovery(true);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        markDeviceRemembered();
+        checkMfaLevel();
         (async () => {
           await loadProfile(session.user.id);
           setLoading(false);
@@ -89,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       listener.subscription.unsubscribe();
     };
-  }, [loadProfile]);
+  }, [loadProfile, checkMfaLevel]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -114,6 +145,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       provider: 'google',
       options: { redirectTo: window.location.origin },
     });
+    return { error: error?.message ?? null };
+  }, []);
+
+  const requestPasswordReset = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+    return { error: error?.message ?? null };
+  }, []);
+
+  const updatePassword = useCallback(async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (!error) setIsPasswordRecovery(false);
+    return { error: error?.message ?? null };
+  }, []);
+
+  const clearPasswordRecovery = useCallback(() => setIsPasswordRecovery(false), []);
+
+  const mfaListFactors = useCallback(async () => {
+    const { data } = await supabase.auth.mfa.listFactors();
+    return (data?.totp ?? []).map(f => ({ id: f.id, status: f.status }));
+  }, []);
+
+  const mfaEnroll = useCallback(async () => {
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+    if (error) return { factorId: null, qrCode: null, secret: null, error: error.message };
+    return { factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret, error: null };
+  }, []);
+
+  const mfaVerifyEnrollment = useCallback(async (factorId: string, code: string) => {
+    const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
+    if (challengeError) return { error: challengeError.message };
+    const { error } = await supabase.auth.mfa.verify({ factorId, challengeId: challenge.id, code });
+    if (!error) setNeedsMfaVerification(false);
+    return { error: error?.message ?? null };
+  }, []);
+
+  const mfaUnenroll = useCallback(async (factorId: string) => {
+    const { error } = await supabase.auth.mfa.unenroll({ factorId });
+    return { error: error?.message ?? null };
+  }, []);
+
+  const verifyMfaChallenge = useCallback(async (code: string) => {
+    const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
+    if (listError) return { error: listError.message };
+    const factor = factors.totp.find(f => f.status === 'verified');
+    if (!factor) return { error: 'No verified 2FA factor found' };
+    const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: factor.id });
+    if (challengeError) return { error: challengeError.message };
+    const { error } = await supabase.auth.mfa.verify({ factorId: factor.id, challengeId: challenge.id, code });
+    if (!error) setNeedsMfaVerification(false);
     return { error: error?.message ?? null };
   }, []);
 
@@ -171,6 +253,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updateProfile,
     completeOnboarding,
     setRoleAndComplete,
+    isPasswordRecovery,
+    requestPasswordReset,
+    updatePassword,
+    clearPasswordRecovery,
+    needsMfaVerification,
+    verifyMfaChallenge,
+    mfaEnroll,
+    mfaVerifyEnrollment,
+    mfaUnenroll,
+    mfaListFactors,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

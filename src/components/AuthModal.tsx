@@ -3,7 +3,7 @@ import { useAuth } from '../lib/auth';
 import { Modal, Spinner } from './ui';
 import { useTheme } from '../lib/theme';
 import { t } from '../lib/i18n';
-import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Check } from 'lucide-react';
 
 function GoogleIcon({ className = '' }: { className?: string }) {
   return (
@@ -21,13 +21,13 @@ export function AuthModal({ open, onClose, mode: initialMode = 'signin' }: {
   onClose: () => void;
   mode?: 'signin' | 'signup';
 }) {
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, signInWithGoogle, requestPasswordReset } = useAuth();
   const { language } = useTheme();
   void language;
-  const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>(initialMode);
 
   useEffect(() => {
-    if (open) setMode(initialMode);
+    if (open) { setMode(initialMode); setResetSent(false); }
   }, [open, initialMode]);
 
   const [email, setEmail] = useState('');
@@ -37,6 +37,17 @@ export function AuthModal({ open, onClose, mode: initialMode = 'signin' }: {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetSent, setResetSent] = useState(false);
+
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    const { error } = await requestPasswordReset(email);
+    setLoading(false);
+    if (error) setError(error);
+    else setResetSent(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,76 +97,120 @@ export function AuthModal({ open, onClose, mode: initialMode = 'signin' }: {
             <img src="/logo.svg" alt="Nexwork" className="w-full h-full object-cover" />
           </div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            {mode === 'signin' ? t('auth.signInTitle') : t('auth.signUpTitle')}
+            {mode === 'signin' ? t('auth.signInTitle') : mode === 'signup' ? t('auth.signUpTitle') : t('auth.forgot.title')}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {mode === 'signin' ? t('auth.signInSubtitle') : t('auth.signUpSubtitle')}
+            {mode === 'signin' ? t('auth.signInSubtitle') : mode === 'signup' ? t('auth.signUpSubtitle') : t('auth.forgot.subtitle')}
           </p>
         </div>
 
-        {/* Google sign-in */}
-        <button
-          onClick={handleGoogle}
-          disabled={googleLoading || loading}
-          className="w-full inline-flex items-center justify-center gap-3 px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-200 active:scale-95 disabled:opacity-50 mb-4"
-        >
-          {googleLoading ? <Spinner className="w-5 h-5" /> : <GoogleIcon />}
-          {t('auth.googleSignIn')}
-        </button>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-          <span className="text-xs text-slate-400">{t('auth.or')}</span>
-          <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === 'signup' && (
-            <div>
-              <label className="label">{t('auth.name')}</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input type="text" required value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Иван Иванов" className="input pl-10" />
+        {mode === 'forgot' ? (
+          resetSent ? (
+            <div className="text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-success-100 dark:bg-success-900/30 flex items-center justify-center mx-auto">
+                <Check className="w-6 h-6 text-success-600" />
               </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300">{t('auth.forgot.sent')}</p>
+              <button onClick={() => { setMode('signin'); setResetSent(false); setError(null); }} className="btn-secondary w-full">{t('auth.forgot.backToSignIn')}</button>
             </div>
-          )}
+          ) : (
+            <form onSubmit={handleForgotSubmit} className="space-y-4">
+              <div>
+                <label className="label">{t('auth.email')}</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="input pl-10" autoFocus />
+                </div>
+              </div>
 
-          <div>
-            <label className="label">{t('auth.email')}</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="input pl-10" />
+              {error && (
+                <div className="px-4 py-3 bg-error-50 dark:bg-error-900/20 text-error-700 dark:text-error-400 text-sm rounded-xl">{error}</div>
+              )}
+
+              <button type="submit" disabled={loading} className="btn-primary w-full">
+                {loading ? <Spinner className="w-4 h-4" /> : null}
+                {t('auth.forgot.send')}
+              </button>
+
+              <button type="button" onClick={() => { setMode('signin'); setError(null); }} className="w-full text-center text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                {t('auth.forgot.backToSignIn')}
+              </button>
+            </form>
+          )
+        ) : (
+          <>
+            {/* Google sign-in */}
+            <button
+              onClick={handleGoogle}
+              disabled={googleLoading || loading}
+              className="w-full inline-flex items-center justify-center gap-3 px-4 py-2.5 bg-white dark:bg-[#161c2b] hover:bg-slate-50 dark:hover:bg-[#1c2338] text-slate-700 dark:text-slate-200 font-semibold rounded-xl border border-slate-200 dark:border-[#232a3d] transition-all duration-200 active:scale-95 disabled:opacity-50 mb-4"
+            >
+              {googleLoading ? <Spinner className="w-5 h-5" /> : <GoogleIcon />}
+              {t('auth.googleSignIn')}
+            </button>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+              <span className="text-xs text-slate-400">{t('auth.or')}</span>
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
             </div>
-          </div>
 
-          <div>
-            <label className="label">{t('auth.password')}</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input type={showPassword ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="input pl-10 pr-10" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {mode === 'signup' && (
+                <div>
+                  <label className="label">{t('auth.name')}</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input type="text" required value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Иван Иванов" className="input pl-10" />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="label">{t('auth.email')}</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="input pl-10" />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <label className="label !mb-0">{t('auth.password')}</label>
+                  {mode === 'signin' && (
+                    <button type="button" onClick={() => { setMode('forgot'); setError(null); }} className="text-xs text-brand-600 hover:text-brand-700 font-medium">
+                      {t('auth.forgotPassword')}
+                    </button>
+                  )}
+                </div>
+                <div className="relative mt-1.5">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input type={showPassword ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="input pl-10 pr-10" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="px-4 py-3 bg-error-50 dark:bg-error-900/20 text-error-700 dark:text-error-400 text-sm rounded-xl">{error}</div>
+              )}
+
+              <button type="submit" disabled={loading} className="btn-primary w-full">
+                {loading ? <Spinner className="w-4 h-4" /> : null}
+                {mode === 'signin' ? t('auth.signIn') : t('auth.signUp')}
+              </button>
+            </form>
+
+            <div className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
+              {mode === 'signin' ? t('auth.noAccount') : t('auth.hasAccount')}
+              <button onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); }} className="text-brand-600 hover:text-brand-700 font-semibold">
+                {mode === 'signin' ? t('auth.signUp') : t('auth.signIn')}
               </button>
             </div>
-          </div>
-
-          {error && (
-            <div className="px-4 py-3 bg-error-50 dark:bg-error-900/20 text-error-700 dark:text-error-400 text-sm rounded-xl">{error}</div>
-          )}
-
-          <button type="submit" disabled={loading} className="btn-primary w-full">
-            {loading ? <Spinner className="w-4 h-4" /> : null}
-            {mode === 'signin' ? t('auth.signIn') : t('auth.signUp')}
-          </button>
-        </form>
-
-        <div className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
-          {mode === 'signin' ? t('auth.noAccount') : t('auth.hasAccount')}
-          <button onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); }} className="text-brand-600 hover:text-brand-700 font-semibold">
-            {mode === 'signin' ? t('auth.signUp') : t('auth.signIn')}
-          </button>
-        </div>
+          </>
+        )}
       </div>
     </Modal>
   );

@@ -23,14 +23,6 @@ export const SKILLS_LIBRARY = [
 
 export const GIG_CATEGORIES = CATEGORIES;
 
-export const BUDGET_RANGES = [
-  { key: '0-50', label: 'До $50', min: 0, max: 50 },
-  { key: '50-200', label: '$50 — $200', min: 50, max: 200 },
-  { key: '200-500', label: '$200 — $500', min: 200, max: 500 },
-  { key: '500-1000', label: '$500 — $1000', min: 500, max: 1000 },
-  { key: '1000+', label: '$1000+', min: 1000, max: 100000 },
-];
-
 export const DELIVERY_OPTIONS = [
   { key: '1', label: '1 день', value: 1 },
   { key: '3', label: 'до 3 дней', value: 3 },
@@ -39,111 +31,9 @@ export const DELIVERY_OPTIONS = [
   { key: '30', label: 'до 30 дней', value: 30 },
 ];
 
-export const PREMIUM_PLANS = [
-  {
-    key: 'starter',
-    name: 'Старт',
-    nameUz: 'Start',
-    nameEn: 'Starter',
-    price: 9.99,
-    period: 'мес',
-    periodUz: 'oy',
-    periodEn: 'mo',
-    features: [
-      'До 10 активных услуг',
-      'Приоритет в поиске',
-      'Расширенная аналитика',
-      'Без комиссии на первые 5 заказов',
-    ],
-    featuresUz: [
-      "10 tagacha faol xizmat",
-      'Qidiruvda ustuvorlik',
-      'Kengaytirilgan analitika',
-      'Birinchi 5 buyurtma uchun komissiyasiz',
-    ],
-    featuresEn: [
-      'Up to 10 active gigs',
-      'Priority in search',
-      'Advanced analytics',
-      'No fee on your first 5 orders',
-    ],
-    popular: false,
-  },
-  {
-    key: 'pro',
-    name: 'Pro',
-    nameUz: 'Pro',
-    nameEn: 'Pro',
-    price: 24.99,
-    period: 'мес',
-    periodUz: 'oy',
-    periodEn: 'mo',
-    features: [
-      'Безлимит услуг',
-      'VIP-поддержка 24/7',
-      'Премиум-бейдж',
-      'Комиссия 5% вместо 10%',
-      'Продвижение в топе',
-      'Цифровой паспорт',
-    ],
-    featuresUz: [
-      'Cheksiz xizmatlar',
-      '24/7 VIP qoʻllab-quvvatlash',
-      'Premium nishon',
-      "10% oʻrniga 5% komissiya",
-      'Yuqori qatorda targʻibot',
-      'Raqamli pasport',
-    ],
-    featuresEn: [
-      'Unlimited gigs',
-      '24/7 VIP support',
-      'Premium badge',
-      '5% fee instead of 10%',
-      'Top placement boost',
-      'Digital passport',
-    ],
-    popular: true,
-  },
-  {
-    key: 'business',
-    name: 'Business',
-    nameUz: 'Business',
-    nameEn: 'Business',
-    price: 49.99,
-    period: 'мес',
-    periodUz: 'oy',
-    periodEn: 'mo',
-    features: [
-      'Всё из Pro',
-      'Команда до 10 человек',
-      'API-доступ',
-      'Белый лейбл',
-      'Эксклюзивные тендеры',
-      'Персональный менеджер',
-    ],
-    featuresUz: [
-      "Pro'dagi barchasi",
-      "10 kishigacha jamoa",
-      'API kirish',
-      'Oq yorliq (white label)',
-      'Eksklyuziv tenderlar',
-      'Shaxsiy menejer',
-    ],
-    featuresEn: [
-      'Everything in Pro',
-      'Team of up to 10 people',
-      'API access',
-      'White label',
-      'Exclusive tenders',
-      'Dedicated account manager',
-    ],
-    popular: false,
-  },
-];
-
 export const LANGUAGES = [
-  { code: 'ru', label: 'Русский', flag: '🇷🇺' },
-  { code: 'uz', label: 'O\'zbek', flag: '🇺🇿' },
+  { code: 'ru', label: 'Русский', flag: 'RU' },
+  { code: 'uz', label: 'O\'zbek', flag: 'UZ' },
   { code: 'en', label: 'English', flag: 'EN' },
 ];
 
@@ -204,3 +94,6 @@ export function getAvatarUrl(profile: { avatar_url?: string | null; display_name
   const name = profile.display_name || profile.full_name || profile.email || 'User';
   return AVATAR_FALLBACK(name);
 }
+
+export const NEXWORK_TG = 'https://t.me/nexwork_uz';
+export const NEXWORK_PHONE = '+998200103133';

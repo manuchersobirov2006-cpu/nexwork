@@ -1,5 +1,6 @@
 import { ReactNode, ButtonHTMLAttributes } from 'react';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, Star } from 'lucide-react';
+import { t } from '../lib/i18n';
 
 export function Spinner({ className = '' }: { className?: string }) {
   return <Loader2 className={`animate-spin ${className}`} />;
@@ -28,7 +29,7 @@ export function Modal({ open, onClose, children, title, size = 'md' }: {
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
       <div className={`relative w-full ${sizes[size]} card max-h-[90vh] overflow-hidden flex flex-col animate-scale-in`}>
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#232a3d]">
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">{title}</h2>
             <button onClick={onClose} className="btn-ghost !p-1.5">
               <X className="w-5 h-5" />
@@ -47,7 +48,7 @@ export function Badge({ children, color = 'slate', className = '' }: {
   className?: string;
 }) {
   const colors: Record<string, string> = {
-    slate: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+    slate: 'bg-slate-100 text-slate-700 dark:bg-[#161c2b] dark:text-slate-300',
     blue: 'bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300',
     green: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300',
     amber: 'bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-300',
@@ -56,6 +57,14 @@ export function Badge({ children, color = 'slate', className = '' }: {
     cyan: 'bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-300',
   };
   return <span className={`badge ${colors[color]} ${className}`}>{children}</span>;
+}
+
+export function LevelBadge({ className = '' }: { className?: string }) {
+  return (
+    <Badge color="amber" className={className}>
+      <Star className="w-3 h-3" /> {t('specialists.level.topRated')}
+    </Badge>
+  );
 }
 
 export function Avatar({ src, name, size = 40, className = '' }: {
@@ -80,7 +89,7 @@ export function Avatar({ src, name, size = 40, className = '' }: {
 
 export function Stars({ rating, size = 14 }: { rating: number; size?: number }) {
   return (
-    <div className="flex items-center gap-0.5">
+    <div className="flex items-center justify-center gap-0.5">
       {[1, 2, 3, 4, 5].map(i => (
         <svg key={i} width={size} height={size} viewBox="0 0 20 20" fill={i <= Math.round(rating) ? '#f59e0b' : 'none'} stroke={i <= Math.round(rating) ? '#f59e0b' : '#cbd5e1'} strokeWidth="1.5">
           <path d="M10 1l2.6 5.3 5.9.9-4.3 4.2 1 5.9L10 14.8l-5.2 2.7 1-5.9L1.5 7.2l5.9-.9L10 1z" />
@@ -98,7 +107,7 @@ export function EmptyState({ icon: Icon, title, description, action }: {
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+      <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-[#161c2b] flex items-center justify-center mb-4">
         <Icon className="w-8 h-8 text-slate-400" />
       </div>
       <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">{title}</h3>
@@ -122,19 +131,21 @@ export function SkeletonCard() {
   );
 }
 
-export function Toggle({ checked, onChange, label }: {
+export function Toggle({ checked, onChange, label, disabled }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   label?: string;
+  disabled?: boolean;
 }) {
   return (
-    <label className="flex items-center gap-3 cursor-pointer">
+    <label className={`flex items-center gap-3 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
       <button
         type="button"
         role="switch"
         aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-700'}`}
+        disabled={disabled}
+        onClick={() => !disabled && onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-700'} ${disabled ? 'cursor-not-allowed' : ''}`}
       >
         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
       </button>

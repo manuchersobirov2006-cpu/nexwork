@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Spinner } from '../../components/ui';
 import { formatPrice } from '../../lib/format';
-import { Users, Package, Gavel, ShoppingCart, DollarSign, UserCheck, TrendingUp, Clock } from 'lucide-react';
+import { Users, Package, Gavel, ShoppingCart, DollarSign, UserCheck, TrendingUp, Clock, Briefcase } from 'lucide-react';
 
 type OrderRow = { id: string; price: number; status: string; created_at: string; gig?: { title: string }[] };
 
@@ -17,6 +17,7 @@ type OverviewStats = {
   totalRevenue: number;
   platformFee: number;
   suspendedUsers: number;
+  filledJobs: number;
 };
 
 export function DashboardOverview({ onNavigate }: { onNavigate: (tab: string) => void }) {
@@ -29,13 +30,14 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (tab: string) =>
 
   const load = async () => {
     setLoading(true);
-    const [usersRes, gigsRes, projectsRes, ordersRes, verifRes, suspendedRes] = await Promise.all([
+    const [usersRes, gigsRes, projectsRes, ordersRes, verifRes, suspendedRes, filledJobsRes] = await Promise.all([
       supabase.from('profiles').select('id', { count: 'exact', head: true }),
       supabase.from('gigs').select('id, status', { count: 'exact' }),
       supabase.from('projects').select('id', { count: 'exact', head: true }),
       supabase.from('orders').select('id, price, status, created_at, gig:gig_id(title)'),
       supabase.from('identity_verifications').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_suspended', true),
+      supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('status', 'filled'),
     ]);
 
     const recentUsersData = await supabase.from('profiles').select('id, display_name, full_name, email, role, created_at').order('created_at', { ascending: false }).limit(6);
@@ -57,6 +59,7 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (tab: string) =>
       totalRevenue,
       platformFee: totalRevenue * 0.1,
       suspendedUsers: suspendedRes.count || 0,
+      filledJobs: filledJobsRes.count || 0,
     });
 
     setRecentUsers(recentUsersData.data || []);
@@ -76,6 +79,7 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (tab: string) =>
     { label: 'Заблокированных', value: stats.suspendedUsers, icon: Clock, color: 'amber', tab: 'users' },
     { label: 'Доход платформы', value: formatPrice(stats.platformFee), icon: DollarSign, color: 'amber', tab: 'overview' },
     { label: 'Завершённых заказов', value: stats.completedOrders, icon: TrendingUp, color: 'green', tab: 'orders' },
+    { label: 'Специалистов найдено', value: stats.filledJobs, icon: Briefcase, color: 'blue', tab: 'jobs' },
   ];
 
   return (
@@ -105,7 +109,7 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (tab: string) =>
           </div>
           <div className="space-y-2">
             {recentUsers.map(u => (
-              <div key={u.id} className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+              <div key={u.id} className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-[#161c2b]/50 rounded-lg">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${u.role === 'employer' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30' : 'bg-brand-100 text-brand-600 dark:bg-brand-900/30'}`}>
                   {(u.display_name || u.email)[0].toUpperCase()}
                 </div>
@@ -127,7 +131,7 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (tab: string) =>
           </div>
           <div className="space-y-2">
             {recentOrders.map(o => (
-              <div key={o.id} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+              <div key={o.id} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-[#161c2b]/50 rounded-lg">
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{o.gig?.[0]?.title || 'Заказ'}</div>
                   <div className="text-xs text-slate-500">{o.status}</div>

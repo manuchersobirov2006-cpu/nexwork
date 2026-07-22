@@ -155,7 +155,7 @@ export function IdentityVerificationModal({ open, onClose, onSubmitted, existing
           <label className="label">{t('identity.facePhoto')}</label>
           <div
             onClick={() => faceInputRef.current?.click()}
-            className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center cursor-pointer hover:border-brand-400 transition-colors"
+            className="border-2 border-dashed border-slate-300 dark:border-[#232a3d] rounded-xl p-6 text-center cursor-pointer hover:border-brand-400 transition-colors"
           >
             {facePreview ? (
               <div className="relative inline-block">
@@ -178,7 +178,7 @@ export function IdentityVerificationModal({ open, onClose, onSubmitted, existing
           <label className="label">{t('identity.passportPhoto')}</label>
           <div
             onClick={() => passportInputRef.current?.click()}
-            className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center cursor-pointer hover:border-brand-400 transition-colors"
+            className="border-2 border-dashed border-slate-300 dark:border-[#232a3d] rounded-xl p-6 text-center cursor-pointer hover:border-brand-400 transition-colors"
           >
             {passportPreview ? (
               <div className="relative inline-block">
@@ -196,7 +196,7 @@ export function IdentityVerificationModal({ open, onClose, onSubmitted, existing
           <p className="text-xs text-slate-400 mt-1.5">{t('identity.passportHint')}</p>
         </div>
 
-        <div className="flex items-start gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+        <div className="flex items-start gap-2 p-3 bg-slate-50 dark:bg-[#161c2b]/50 rounded-xl">
           <AlertCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
           <p className="text-xs text-slate-500">
             {t('identity.privacyNote')}
@@ -209,7 +209,7 @@ export function IdentityVerificationModal({ open, onClose, onSubmitted, existing
           </div>
         )}
 
-        <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+        <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-[#232a3d]">
           <button onClick={handleClose} className="btn-secondary">{t('identity.cancel')}</button>
           <button
             onClick={handleSubmit}

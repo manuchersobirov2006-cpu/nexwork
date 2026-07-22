@@ -6,27 +6,36 @@ import { Avatar, Badge, Spinner, EmptyState } from '../components/ui';
 import type { Order } from '../lib/types';
 import {
   LayoutDashboard, Users, Package, Gavel, ShoppingCart,
-  Shield, UserCheck, FileText, ScrollText
+  Shield, UserCheck, FileText, ScrollText, Megaphone, Briefcase, Building2, Send, Star
 } from 'lucide-react';
 import { DashboardOverview } from '../components/admin/DashboardOverview';
 import { UserManagement } from '../components/admin/UserManagement';
-import { GigManagement, ProjectManagement } from '../components/admin/ContentManagement';
+import { GigManagement, ProjectManagement, JobManagement, CompanyManagement } from '../components/admin/ContentManagement';
 import { VerificationQueue } from '../components/admin/VerificationQueue';
 import { PlatformContentEditor } from '../components/admin/PlatformContentEditor';
 import { AuditLogView } from '../components/admin/AuditLogView';
+import { AdManagement } from '../components/admin/AdManagement';
+import { NotificationsManagement } from '../components/admin/NotificationsManagement';
+import { BadgeRequestsManagement } from '../components/admin/BadgeRequestsManagement';
 
-type Tab = 'overview' | 'users' | 'gigs' | 'projects' | 'orders' | 'verifications' | 'content' | 'audit';
+type Tab = 'overview' | 'users' | 'gigs' | 'projects' | 'jobs' | 'companies' | 'orders' | 'verifications' | 'content' | 'audit' | 'ads' | 'notifications' | 'badges';
 
 export function AdminScreen() {
   const { profile } = useAuth();
   const [tab, setTab] = useState<Tab>('overview');
   const [pendingVerifCount, setPendingVerifCount] = useState(0);
+  const [pendingBadgeCount, setPendingBadgeCount] = useState(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
 
   const loadPendingCount = useCallback(async () => {
     const { count } = await supabase.from('identity_verifications').select('id', { count: 'exact', head: true }).eq('status', 'pending');
     if (count !== null) setPendingVerifCount(count);
+  }, []);
+
+  const loadPendingBadgeCount = useCallback(async () => {
+    const { count } = await supabase.from('badge_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+    if (count !== null) setPendingBadgeCount(count);
   }, []);
 
   const loadOrders = useCallback(async () => {
@@ -36,7 +45,7 @@ export function AdminScreen() {
     setLoadingOrders(false);
   }, []);
 
-  useEffect(() => { loadPendingCount(); loadOrders(); }, [loadPendingCount, loadOrders]);
+  useEffect(() => { loadPendingCount(); loadOrders(); loadPendingBadgeCount(); }, [loadPendingCount, loadOrders, loadPendingBadgeCount]);
 
   // Access control — non-admins see this
   if (!profile?.is_admin) {
@@ -53,8 +62,13 @@ export function AdminScreen() {
     { key: 'users', label: 'Пользователи', icon: Users },
     { key: 'gigs', label: 'Услуги', icon: Package },
     { key: 'projects', label: 'Проекты', icon: Gavel },
+    { key: 'jobs', label: 'Вакансии', icon: Briefcase },
+    { key: 'companies', label: 'Компании', icon: Building2 },
     { key: 'orders', label: 'Заказы', icon: ShoppingCart },
     { key: 'content', label: 'Контент', icon: FileText },
+    { key: 'ads', label: 'Реклама', icon: Megaphone },
+    { key: 'badges', label: 'Бейджи', icon: Star, badge: pendingBadgeCount },
+    { key: 'notifications', label: 'Уведомления', icon: Send },
     { key: 'audit', label: 'Журнал', icon: ScrollText },
   ];
 
@@ -70,12 +84,12 @@ export function AdminScreen() {
         </div>
       </div>
 
-      <div className="flex gap-1 mb-6 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto">
+      <div className="flex gap-1 mb-6 p-1 bg-slate-100 dark:bg-[#161c2b] rounded-xl overflow-x-auto">
         {tabs.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 ${tab === t.key ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 ${tab === t.key ? 'bg-white dark:bg-[#10141f] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'}`}
           >
             <t.icon className="w-4 h-4" />
             {t.label}
@@ -89,7 +103,12 @@ export function AdminScreen() {
       {tab === 'users' && <UserManagement adminId={profile.id} />}
       {tab === 'gigs' && <GigManagement adminId={profile.id} />}
       {tab === 'projects' && <ProjectManagement adminId={profile.id} />}
+      {tab === 'jobs' && <JobManagement adminId={profile.id} />}
+      {tab === 'companies' && <CompanyManagement adminId={profile.id} />}
       {tab === 'content' && <PlatformContentEditor adminId={profile.id} />}
+      {tab === 'ads' && <AdManagement adminId={profile.id} />}
+      {tab === 'notifications' && <NotificationsManagement adminId={profile.id} />}
+      {tab === 'badges' && <BadgeRequestsManagement adminId={profile.id} />}
       {tab === 'audit' && <AuditLogView />}
       {tab === 'orders' && (
         <div className="animate-fade-in space-y-2">

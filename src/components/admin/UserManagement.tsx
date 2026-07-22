@@ -3,9 +3,9 @@ import { supabase } from '../../lib/supabase';
 import { logAdminAction } from '../../lib/admin';
 import { Avatar, Badge, Spinner, Modal, EmptyState } from '../../components/ui';
 import { formatDate } from '../../lib/format';
-import type { Profile } from '../../lib/types';
+import type { Profile, Certificate } from '../../lib/types';
 import {
-  Search, Edit, Ban, CheckCircle, KeyRound, Save, X, AlertCircle
+  Search, Edit, Ban, CheckCircle, KeyRound, Save, X, AlertCircle, Award, Plus, Trash2
 } from 'lucide-react';
 
 export function UserManagement({ adminId }: { adminId: string; onNavigateToAudit?: () => void }) {
@@ -18,6 +18,13 @@ export function UserManagement({ adminId }: { adminId: string; onNavigateToAudit
   const [saving, setSaving] = useState(false);
   const [action, setAction] = useState<{ type: string; user: Profile } | null>(null);
   const [reason, setReason] = useState('');
+  const [certUser, setCertUser] = useState<Profile | null>(null);
+  const [certs, setCerts] = useState<Certificate[]>([]);
+  const [certsLoading, setCertsLoading] = useState(false);
+  const [newCertTitle, setNewCertTitle] = useState('');
+  const [newCertIssuer, setNewCertIssuer] = useState('');
+  const [newCertDate, setNewCertDate] = useState('');
+  const [savingCert, setSavingCert] = useState(false);
 
   useEffect(() => { loadUsers(); }, []);
 
@@ -150,6 +157,59 @@ export function UserManagement({ adminId }: { adminId: string; onNavigateToAudit
     setUsers(prev => prev.map(u => u.id === user.id ? { ...u, is_verified: newVerified, verification_level: newLevel } : u));
   };
 
+  const openCerts = async (user: Profile) => {
+    setCertUser(user);
+    setNewCertTitle('');
+    setNewCertIssuer('');
+    setNewCertDate('');
+    setCertsLoading(true);
+    const { data } = await supabase.from('certificates').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+    if (data) setCerts(data as Certificate[]);
+    setCertsLoading(false);
+  };
+
+  const handleAddCert = async () => {
+    if (!certUser || !newCertTitle.trim()) return;
+    setSavingCert(true);
+    const { data, error } = await supabase.from('certificates').insert({
+      user_id: certUser.id,
+      title: newCertTitle.trim(),
+      issuer: newCertIssuer.trim() || null,
+      issued_at: newCertDate || null,
+      issued_by: adminId,
+    }).select('*').single();
+    if (!error && data) {
+      await logAdminAction({
+        adminId,
+        actionType: 'issue_certificate',
+        targetTable: 'certificates',
+        targetId: data.id,
+        afterValue: { user_id: certUser.id, title: newCertTitle.trim() },
+      });
+      await supabase.from('notifications').insert({
+        user_id: certUser.id, type: 'admin',
+        title: 'Вам выдан сертификат',
+        body: newCertTitle.trim(),
+      });
+      setCerts(prev => [data as Certificate, ...prev]);
+      setNewCertTitle(''); setNewCertIssuer(''); setNewCertDate('');
+    }
+    setSavingCert(false);
+  };
+
+  const handleDeleteCert = async (cert: Certificate) => {
+    if (!window.confirm('Удалить этот сертификат?')) return;
+    await supabase.from('certificates').delete().eq('id', cert.id);
+    await logAdminAction({
+      adminId,
+      actionType: 'revoke_certificate',
+      targetTable: 'certificates',
+      targetId: cert.id,
+      beforeValue: { user_id: cert.user_id, title: cert.title },
+    });
+    setCerts(prev => prev.filter(c => c.id !== cert.id));
+  };
+
   const handleResetPassword = async (user: Profile) => {
     const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
       redirectTo: window.location.origin,
@@ -186,7 +246,7 @@ export function UserManagement({ adminId }: { adminId: string; onNavigateToAudit
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs uppercase">
+            <thead className="bg-slate-50 dark:bg-[#161c2b]/50 text-slate-500 text-xs uppercase">
               <tr>
                 <th className="text-left p-3">Пользователь</th>
                 <th className="text-left p-3 hidden sm:table-cell">Роль</th>
@@ -195,9 +255,9 @@ export function UserManagement({ adminId }: { adminId: string; onNavigateToAudit
                 <th className="text-right p-3">Действия</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-slate-100 dark:divide-[#232a3d]">
               {filtered.map(u => (
-                <tr key={u.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 ${u.is_suspended ? 'opacity-60' : ''}`}>
+                <tr key={u.id} className={`hover:bg-slate-50 dark:hover:bg-[#161c2b]/30 ${u.is_suspended ? 'opacity-60' : ''}`}>
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       <Avatar src={u.avatar_url ?? undefined} name={u.display_name || u.email} size={32} />
@@ -223,6 +283,7 @@ export function UserManagement({ adminId }: { adminId: string; onNavigateToAudit
                         <button onClick={() => { setAction({ type: 'suspend', user: u }); setReason(''); }} className="btn-ghost !p-1.5 text-error-600" title="Заблокировать"><Ban className="w-4 h-4" /></button>
                       )}
                       <button onClick={() => { setAction({ type: 'reset', user: u }); }} className="btn-ghost !p-1.5" title="Сбросить пароль"><KeyRound className="w-4 h-4" /></button>
+                      <button onClick={() => openCerts(u)} className="btn-ghost !p-1.5 text-amber-600" title="Сертификаты"><Award className="w-4 h-4" /></button>
                     </div>
                   </td>
                 </tr>
@@ -273,7 +334,7 @@ export function UserManagement({ adminId }: { adminId: string; onNavigateToAudit
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Верифицирован</span>
               </label>
             </div>
-            <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-[#232a3d]">
               <button onClick={() => setEditing(null)} className="btn-secondary"><X className="w-4 h-4" /> Отмена</button>
               <button onClick={handleSaveEdit} disabled={saving} className="btn-primary">{saving ? <Spinner className="w-4 h-4" /> : <Save className="w-4 h-4" />} Сохранить</button>
             </div>
@@ -293,6 +354,43 @@ export function UserManagement({ adminId }: { adminId: string; onNavigateToAudit
             <div className="flex gap-2">
               <button onClick={() => setAction(null)} className="btn-secondary flex-1">Отмена</button>
               <button onClick={handleSuspend} disabled={!reason.trim()} className="btn-danger flex-1"><Ban className="w-4 h-4" /> Заблокировать</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Certificates modal */}
+      {certUser && (
+        <Modal open onClose={() => setCertUser(null)} size="lg" title={`Сертификаты: ${certUser.display_name || certUser.full_name}`}>
+          <div className="p-6 space-y-5">
+            <div className="grid sm:grid-cols-3 gap-3">
+              <input className="input sm:col-span-1" placeholder="Название сертификата" value={newCertTitle} onChange={e => setNewCertTitle(e.target.value)} />
+              <input className="input sm:col-span-1" placeholder="Кем выдан (необязательно)" value={newCertIssuer} onChange={e => setNewCertIssuer(e.target.value)} />
+              <input className="input sm:col-span-1" type="date" value={newCertDate} onChange={e => setNewCertDate(e.target.value)} />
+            </div>
+            <button onClick={handleAddCert} disabled={savingCert || !newCertTitle.trim()} className="btn-primary">
+              {savingCert ? <Spinner className="w-4 h-4" /> : <Plus className="w-4 h-4" />} Выдать сертификат
+            </button>
+
+            <div className="border-t border-slate-200 dark:border-[#232a3d] pt-4">
+              {certsLoading ? (
+                <div className="flex justify-center py-6"><Spinner className="w-6 h-6 text-brand-600" /></div>
+              ) : certs.length === 0 ? (
+                <EmptyState icon={Award} title="Сертификатов пока нет" description="Добавьте первый сертификат для этого пользователя" />
+              ) : (
+                <div className="space-y-2">
+                  {certs.map(cert => (
+                    <div key={cert.id} className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-xl">
+                      <Award className="w-5 h-5 text-amber-500 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-slate-900 dark:text-white text-sm truncate">{cert.title}</div>
+                        <div className="text-xs text-slate-500 truncate">{[cert.issuer, cert.issued_at ? formatDate(cert.issued_at) : null].filter(Boolean).join(' · ')}</div>
+                      </div>
+                      <button onClick={() => handleDeleteCert(cert)} className="btn-ghost !p-1.5 text-error-600" title="Удалить"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </Modal>

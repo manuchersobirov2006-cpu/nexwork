@@ -6,16 +6,34 @@
 
 @layer base {
   * {
-    @apply border-slate-200 dark:border-slate-700;
+    @apply border-slate-200 dark:border-[#232a3d];
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+    @apply bg-slate-50 text-slate-900 dark:text-slate-100;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  .dark body {
+    background-color: #0a0e17;
+    background-image:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(59, 130, 246, 0.18), transparent 60%),
+      radial-gradient(ellipse 700px 600px at 100% 10%, rgba(45, 212, 191, 0.08), transparent 55%);
+    background-attachment: fixed;
   }
 
   ::selection {
     @apply bg-brand-600/20;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
   }
 }
 
@@ -25,11 +43,11 @@
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-200 active:scale-95 disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-[#10141f] hover:bg-slate-50 dark:hover:bg-[#161c2b] text-slate-700 dark:text-slate-200 font-semibold rounded-xl border border-slate-200 dark:border-[#232a3d] transition-all duration-200 active:scale-95 disabled:opacity-50;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium rounded-lg transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-3 py-2 hover:bg-slate-100 dark:hover:bg-[#161c2b] text-slate-600 dark:text-slate-300 font-medium rounded-lg transition-all duration-200;
   }
 
   .btn-danger {
@@ -37,7 +55,7 @@
   }
 
   .card {
-    @apply bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-card transition-shadow duration-200;
+    @apply bg-white dark:bg-[#10141f] rounded-2xl border border-slate-200 dark:border-[#232a3d] shadow-card transition-shadow duration-200;
   }
 
   .card-hover {
@@ -45,7 +63,7 @@
   }
 
   .input {
-    @apply w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all duration-200;
+    @apply w-full px-4 py-2.5 bg-white dark:bg-[#10141f] border border-slate-200 dark:border-[#232a3d] rounded-xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all duration-200;
   }
 
   .input-sm {
@@ -61,15 +79,15 @@
   }
 
   .nav-link {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-all duration-200 font-medium text-sm;
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#161c2b] hover:text-slate-900 dark:hover:text-slate-100 transition-all duration-200 font-medium text-sm;
   }
 
   .nav-link-active {
-    @apply bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-900/20;
+    @apply bg-brand-50 dark:bg-brand-900/25 text-brand-700 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-900/25;
   }
 
   .skeleton {
-    @apply bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse;
+    @apply bg-slate-200 dark:bg-[#161c2b] rounded-lg animate-pulse;
   }
 }
 
@@ -98,7 +116,7 @@
   }
 
   .glass {
-    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-md;
+    @apply bg-white/80 dark:bg-[#0a0e17]/80 backdrop-blur-md;
   }
 }
 

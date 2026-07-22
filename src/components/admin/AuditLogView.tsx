@@ -58,14 +58,14 @@ export function AuditLogView() {
       </div>
 
       <div className="card overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50">
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-[#232a3d] flex items-center gap-2 bg-slate-50 dark:bg-[#161c2b]/50">
           <Shield className="w-4 h-4 text-slate-400" />
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Журнал действий (только чтение)</span>
           <Badge color="slate" className="ml-auto">{filtered.length} записей</Badge>
         </div>
-        <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[60vh] overflow-y-auto scrollbar-thin">
+        <div className="divide-y divide-slate-100 dark:divide-[#232a3d] max-h-[60vh] overflow-y-auto scrollbar-thin">
           {filtered.map(log => (
-            <div key={log.id} className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+            <div key={log.id} className="p-3 hover:bg-slate-50 dark:hover:bg-[#161c2b]/30">
               <div className="flex items-center gap-3">
                 {log.admin && <Avatar src={log.admin.avatar_url ?? undefined} name={log.admin.display_name || log.admin.email} size={28} />}
                 <div className="flex-1 min-w-0">
@@ -87,7 +87,7 @@ export function AuditLogView() {
               {expanded === log.id && (log.before_value || log.after_value) && (
                 <div className="grid sm:grid-cols-2 gap-3 mt-3 pl-10 animate-slide-down">
                   {log.before_value && (
-                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
+                    <div className="bg-slate-50 dark:bg-[#161c2b]/50 rounded-lg p-3">
                       <div className="text-xs font-semibold text-slate-500 mb-1">До</div>
                       <pre className="text-xs text-slate-600 dark:text-slate-400 overflow-x-auto max-h-40">{JSON.stringify(log.before_value, null, 2)}</pre>
                     </div>

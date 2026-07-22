@@ -19,7 +19,7 @@ export function FooterInfoModal({ topic, onClose }: { topic: FooterInfoKey; onCl
               href={NEXWORK_TG}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-[#161c2b]/50 rounded-xl hover:bg-slate-100 dark:hover:bg-[#161c2b] transition-colors"
             >
               <div className="w-10 h-10 rounded-lg bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center shrink-0">
                 <Send className="w-5 h-5 text-brand-600 dark:text-brand-400" />
@@ -31,7 +31,7 @@ export function FooterInfoModal({ topic, onClose }: { topic: FooterInfoKey; onCl
             </a>
             <a
               href={`tel:${NEXWORK_PHONE}`}
-              className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-[#161c2b]/50 rounded-xl hover:bg-slate-100 dark:hover:bg-[#161c2b] transition-colors"
             >
               <div className="w-10 h-10 rounded-lg bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center shrink-0">
                 <Phone className="w-5 h-5 text-brand-600 dark:text-brand-400" />

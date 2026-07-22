@@ -30,7 +30,7 @@ export function LanguageSwitcher() {
                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${
                   language === lang.code
                     ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 font-medium'
-                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300'
+                    : 'hover:bg-slate-50 dark:hover:bg-[#161c2b]/50 text-slate-700 dark:text-slate-300'
                 }`}
               >
                 <span>{lang.flag}</span>

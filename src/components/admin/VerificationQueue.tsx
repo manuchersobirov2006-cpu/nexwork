@@ -186,11 +186,11 @@ export function VerificationQueue({ adminId, onAction }: {
               <div className="grid sm:grid-cols-2 gap-4 mb-5">
                 <div>
                   <div className="flex items-center gap-2 mb-2"><UserCheck className="w-4 h-4 text-slate-400" /><span className="text-sm font-medium text-slate-700 dark:text-slate-300">Фото лица</span></div>
-                  {faceUrl ? <img src={faceUrl} alt="Face" className="w-full rounded-xl border border-slate-200 dark:border-slate-700" /> : <div className="card p-8 text-center text-sm text-slate-500">Не удалось загрузить</div>}
+                  {faceUrl ? <img src={faceUrl} alt="Face" className="w-full rounded-xl border border-slate-200 dark:border-[#232a3d]" /> : <div className="card p-8 text-center text-sm text-slate-500">Не удалось загрузить</div>}
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-2"><FileText className="w-4 h-4 text-slate-400" /><span className="text-sm font-medium text-slate-700 dark:text-slate-300">Фото документа</span></div>
-                  {passportUrl ? <img src={passportUrl} alt="Passport" className="w-full rounded-xl border border-slate-200 dark:border-slate-700" /> : <div className="card p-8 text-center text-sm text-slate-500">Не удалось загрузить</div>}
+                  {passportUrl ? <img src={passportUrl} alt="Passport" className="w-full rounded-xl border border-slate-200 dark:border-[#232a3d]" /> : <div className="card p-8 text-center text-sm text-slate-500">Не удалось загрузить</div>}
                 </div>
               </div>
             )}
@@ -206,7 +206,7 @@ export function VerificationQueue({ adminId, onAction }: {
                   </div>
                 </div>
               ) : (
-                <div className="flex gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex gap-2 pt-4 border-t border-slate-200 dark:border-[#232a3d]">
                   <button onClick={() => setShowReject(true)} disabled={acting} className="btn-danger flex-1"><XCircle className="w-4 h-4" /> Отклонить</button>
                   <button onClick={handleApprove} disabled={acting} className="btn-primary flex-1">{acting ? <Spinner className="w-4 h-4" /> : <Check className="w-4 h-4" />} Одобрить</button>
                 </div>

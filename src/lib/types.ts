@@ -1,6 +1,15 @@
 export type UserRole = 'freelancer' | 'employer' | 'admin';
 export type VerificationLevel = 'none' | 'phone' | 'identity' | 'full';
 
+export interface SocialLinks {
+  telegram?: string;
+  instagram?: string;
+  facebook?: string;
+  whatsapp?: string;
+  linkedin?: string;
+  youtube?: string;
+}
+
 export interface Profile {
   id: string;
   public_id: string;
@@ -30,6 +39,8 @@ export interface Profile {
   last_seen: string;
   response_rate: number;
   response_time: string | null;
+  email_notifications_enabled: boolean;
+  social_links: SocialLinks;
   created_at: string;
   updated_at: string;
 }
@@ -54,22 +65,60 @@ export interface Gig {
   created_at: string;
   updated_at: string;
   seller?: Profile;
+  packages?: GigPackage[];
+  extras?: GigExtra[];
+}
+
+export interface GigPackage {
+  id: string;
+  gig_id: string;
+  tier: 'basic' | 'standard' | 'premium';
+  title: string;
+  description: string | null;
+  price: number;
+  delivery_days: number;
+  revisions: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GigExtra {
+  id: string;
+  gig_id: string;
+  title: string;
+  price: number;
+  delivery_days_delta: number;
+  created_at: string;
+}
+
+export interface SelectedExtra {
+  id: string;
+  title: string;
+  price: number;
 }
 
 export interface Order {
   id: string;
   gig_id: string | null;
+  gig_package_id: string | null;
+  selected_extras: SelectedExtra[];
+  project_id: string | null;
+  bid_id: string | null;
   buyer_id: string;
   seller_id: string;
   status: 'pending' | 'active' | 'delivered' | 'completed' | 'cancelled' | 'disputed';
   price: number;
   requirements: string | null;
   delivery_deadline: string | null;
+  delivery_note: string | null;
+  delivery_link: string | null;
   delivered_at: string | null;
   completed_at: string | null;
   created_at: string;
   updated_at: string;
   gig?: Gig;
+  gig_package?: GigPackage;
+  project?: Project;
   buyer?: Profile;
   seller?: Profile;
 }
@@ -83,6 +132,7 @@ export interface Project {
   budget_min: number | null;
   budget_max: number | null;
   budget_fixed: number | null;
+  currency: string;
   deadline: string | null;
   duration_days: number | null;
   attachments: string[];
@@ -109,6 +159,19 @@ export interface Bid {
   freelancer?: Profile;
 }
 
+export interface Ad {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  link_url: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PortfolioItem {
   id: string;
   user_id: string;
@@ -121,11 +184,35 @@ export interface PortfolioItem {
   updated_at: string;
 }
 
+export interface Certificate {
+  id: string;
+  user_id: string;
+  title: string;
+  issuer: string | null;
+  issued_at: string | null;
+  image_url: string | null;
+  issued_by: string | null;
+  created_at: string;
+}
+
+export interface BadgeRequest {
+  id: string;
+  user_id: string;
+  status: 'pending' | 'approved' | 'rejected';
+  amount: number;
+  months: number;
+  created_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  admin_note: string | null;
+}
+
 export interface JobApplication {
   id: string;
   job_id: string;
   applicant_id: string;
   cover_letter: string | null;
+  resume_url: string | null;
   status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
   created_at: string;
   updated_at: string;
@@ -158,6 +245,16 @@ export interface BidMessageMetadata {
   portfolio_item_ids: string[];
 }
 
+export interface JobApplicationMessageMetadata {
+  application_id: string;
+  job_id: string;
+  job_title: string;
+  employer_id: string;
+  applicant_id: string;
+  cover_letter: string | null;
+  resume_url: string | null;
+}
+
 export interface Message {
   id: string;
   chat_id: string;
@@ -165,8 +262,8 @@ export interface Message {
   content: string;
   attachments: string[];
   is_read: boolean;
-  message_type: 'text' | 'bid';
-  metadata: BidMessageMetadata | Record<string, never>;
+  message_type: 'text' | 'bid' | 'job_application';
+  metadata: BidMessageMetadata | JobApplicationMessageMetadata | Record<string, never>;
   created_at: string;
 }
 
@@ -224,9 +321,11 @@ export interface Job {
   location: string | null;
   is_remote: boolean;
   skills_required: string[];
-  status: 'active' | 'closed' | 'draft';
+  status: 'active' | 'closed' | 'draft' | 'filled';
   applicants_count: number;
   views: number;
+  contact_phone: string | null;
+  social_links: SocialLinks;
   created_at: string;
   employer?: Profile;
   company?: Company;
@@ -251,9 +350,11 @@ export interface Task {
 export interface Favorite {
   id: string;
   user_id: string;
-  gig_id: string;
+  gig_id: string | null;
+  specialist_id: string | null;
   created_at: string;
   gig?: Gig;
+  specialist?: Profile;
 }
 
 export interface IdentityVerification {

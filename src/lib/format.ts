@@ -1,13 +1,17 @@
 import { getLanguage } from './i18n';
 
-const CURRENCY_LABEL: Record<string, string> = { ru: 'сум', uz: "so'm", en: 'UZS' };
+const CURRENCY_LABEL: Record<string, Record<string, string>> = {
+  UZS: { ru: 'сум', uz: "so'm", en: 'UZS' },
+  USD: { ru: '$', uz: '$', en: '$' },
+};
 
-export function formatPrice(amount: number): string {
-  const label = CURRENCY_LABEL[getLanguage()] ?? CURRENCY_LABEL.ru;
-  if (amount >= 1000) {
-    return `${(amount / 1000).toFixed(1)}k ${label}`;
+export function formatPrice(amount: number, currency: string = 'UZS'): string {
+  const units = CURRENCY_LABEL[currency] ?? CURRENCY_LABEL.UZS;
+  const label = units[getLanguage()] ?? units.ru;
+  if (currency === 'USD') {
+    return `${label}${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   }
-  return `${amount.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${label}`;
+  return `${amount.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ${label}`;
 }
 
 export function formatNumber(n: number): string {

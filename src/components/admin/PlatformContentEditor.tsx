@@ -20,10 +20,10 @@ export function PlatformContentEditor({ adminId }: { adminId: string }) {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex gap-1 mb-4 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto">
+      <div className="flex gap-1 mb-4 p-1 bg-slate-100 dark:bg-[#161c2b] rounded-xl overflow-x-auto">
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 ${tab === t.key ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'}`}>
+            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 ${tab === t.key ? 'bg-white dark:bg-[#10141f] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'}`}>
             <t.icon className="w-4 h-4" /> {t.label}
           </button>
         ))}
@@ -83,9 +83,9 @@ function ContentBlocksEditor({ adminId }: { adminId: string }) {
   return (
     <div>
       <div className="mb-3 flex gap-2 flex-wrap">
-        <button onClick={() => setSectionFilter('all')} className={`px-3 py-1.5 rounded-lg text-sm ${sectionFilter === 'all' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'}`}>Все</button>
+        <button onClick={() => setSectionFilter('all')} className={`px-3 py-1.5 rounded-lg text-sm ${sectionFilter === 'all' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-[#161c2b] text-slate-600'}`}>Все</button>
         {sections.map(s => (
-          <button key={s} onClick={() => setSectionFilter(s)} className={`px-3 py-1.5 rounded-lg text-sm capitalize ${sectionFilter === s ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'}`}>{s}</button>
+          <button key={s} onClick={() => setSectionFilter(s)} className={`px-3 py-1.5 rounded-lg text-sm capitalize ${sectionFilter === s ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-[#161c2b] text-slate-600'}`}>{s}</button>
         ))}
       </div>
       <div className="space-y-2">
@@ -121,7 +121,7 @@ function ContentBlocksEditor({ adminId }: { adminId: string }) {
                 </label>
               </div>
             </div>
-            <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-[#232a3d]">
               <button onClick={() => setEditing(null)} className="btn-secondary"><X className="w-4 h-4" /> Отмена</button>
               <button onClick={handleSave} disabled={saving} className="btn-primary">{saving ? <Spinner className="w-4 h-4" /> : <Save className="w-4 h-4" />} Сохранить</button>
             </div>
@@ -223,7 +223,7 @@ function CategoriesEditor({ adminId }: { adminId: string }) {
               <input type="checkbox" checked={editForm.is_active ?? false} onChange={e => setEditForm({ ...editForm, is_active: e.target.checked })} className="w-4 h-4 rounded" />
               <span className="text-sm">Активна</span>
             </label>
-            <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-[#232a3d]">
               <button onClick={() => setEditing(null)} className="btn-secondary"><X className="w-4 h-4" /> Отмена</button>
               <button onClick={handleSave} disabled={saving} className="btn-primary">{saving ? <Spinner className="w-4 h-4" /> : <Save className="w-4 h-4" />} Сохранить</button>
             </div>
@@ -240,7 +240,7 @@ function CategoriesEditor({ adminId }: { adminId: string }) {
               <div><label className="label">Название (RU)</label><input className="input" value={editForm.label ?? ''} onChange={e => setEditForm({ ...editForm, label: e.target.value })} /></div>
               <div><label className="label">Название (EN)</label><input className="input" value={editForm.label_en ?? ''} onChange={e => setEditForm({ ...editForm, label_en: e.target.value })} /></div>
             </div>
-            <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-[#232a3d]">
               <button onClick={() => setCreating(false)} className="btn-secondary"><X className="w-4 h-4" /> Отмена</button>
               <button onClick={handleCreate} disabled={saving} className="btn-primary">{saving ? <Spinner className="w-4 h-4" /> : <Plus className="w-4 h-4" />} Создать</button>
             </div>
@@ -309,7 +309,7 @@ function TranslationsEditor({ adminId }: { adminId: string }) {
       </div>
       <div className="card overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs uppercase">
+          <thead className="bg-slate-50 dark:bg-[#161c2b]/50 text-slate-500 text-xs uppercase">
             <tr>
               <th className="text-left p-3 w-20">Язык</th>
               <th className="text-left p-3">Ключ</th>
@@ -317,9 +317,9 @@ function TranslationsEditor({ adminId }: { adminId: string }) {
               <th className="text-right p-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-slate-100 dark:divide-[#232a3d]">
             {filtered.slice(0, 100).map(t => (
-              <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 cursor-pointer" onClick={() => { setEditing(t); setEditValue(t.value); }}>
+              <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-[#161c2b]/30 cursor-pointer" onClick={() => { setEditing(t); setEditValue(t.value); }}>
                 <td className="p-3"><Badge color="blue">{t.locale}</Badge></td>
                 <td className="p-3 font-mono text-xs text-slate-600 dark:text-slate-400">{t.key}</td>
                 <td className="p-3 hidden md:table-cell text-slate-700 dark:text-slate-300 truncate max-w-xs">{t.value}</td>
@@ -335,7 +335,7 @@ function TranslationsEditor({ adminId }: { adminId: string }) {
         <Modal open onClose={() => setEditing(null)} size="md" title={`Перевод: ${editing.locale} / ${editing.key}`}>
           <div className="p-6 space-y-4">
             <div><label className="label">Значение</label><textarea className="input" rows={3} value={editValue} onChange={e => setEditValue(e.target.value)} autoFocus /></div>
-            <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-[#232a3d]">
               <button onClick={() => setEditing(null)} className="btn-secondary"><X className="w-4 h-4" /> Отмена</button>
               <button onClick={handleSave} disabled={saving} className="btn-primary">{saving ? <Spinner className="w-4 h-4" /> : <Save className="w-4 h-4" />} Сохранить</button>
             </div>
@@ -416,7 +416,7 @@ function BlogEditor({ adminId }: { adminId: string }) {
       <div className="space-y-2">
         {items.map(post => (
           <div key={post.id} className="card p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-[#161c2b] flex items-center justify-center shrink-0">
               <FileText className="w-5 h-5 text-slate-400" />
             </div>
             <div className="flex-1 min-w-0">
@@ -450,7 +450,7 @@ function BlogEditor({ adminId }: { adminId: string }) {
                 <option value="archived">Архив</option>
               </select>
             </div>
-            <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-[#232a3d]">
               <button onClick={() => { setEditing(null); setCreating(false); }} className="btn-secondary"><X className="w-4 h-4" /> Отмена</button>
               <button onClick={editing ? handleSave : handleCreate} disabled={saving} className="btn-primary">{saving ? <Spinner className="w-4 h-4" /> : <Save className="w-4 h-4" />} {editing ? 'Сохранить' : 'Создать'}</button>
             </div>

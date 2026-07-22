@@ -4,10 +4,11 @@ import { CATEGORIES, SKILLS_LIBRARY } from '../lib/constants';
 import { Spinner } from '../components/ui';
 import { useTheme } from '../lib/theme';
 import { t } from '../lib/i18n';
+import { markNotifPromptPending } from '../lib/pushNotifications';
 import { Briefcase, PenTool, Check, ArrowRight, MapPin, Phone } from 'lucide-react';
 
 export function Onboarding() {
-  const { profile, updateProfile, completeOnboarding, needsRoleSelection, setRoleAndComplete } = useAuth();
+  const { user, profile, updateProfile, completeOnboarding, needsRoleSelection, setRoleAndComplete } = useAuth();
   const { language } = useTheme();
   const [step, setStep] = useState(needsRoleSelection ? 0 : 0);
   const [role, setRole] = useState<'freelancer' | 'employer'>(profile?.role === 'employer' ? 'employer' : 'freelancer');
@@ -51,12 +52,14 @@ export function Onboarding() {
     });
     setSaving(false);
     completeOnboarding();
+    if (user) markNotifPromptPending(user.id);
   };
 
   const handleRoleOnly = async () => {
     setSaving(true);
     await setRoleAndComplete(role);
     setSaving(false);
+    if (user) markNotifPromptPending(user.id);
   };
 
   const canProceed = () => {
@@ -81,11 +84,11 @@ export function Onboarding() {
               className={`p-6 rounded-2xl border-2 text-left transition-all duration-200 ${
                 role === 'freelancer'
                   ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
-                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                  : 'border-slate-200 dark:border-[#232a3d] hover:border-slate-300'
               }`}
             >
               <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3 ${
-                role === 'freelancer' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'
+                role === 'freelancer' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-[#161c2b] text-slate-600'
               }`}>
                 <PenTool className="w-6 h-6" />
               </div>
@@ -98,11 +101,11 @@ export function Onboarding() {
               className={`p-6 rounded-2xl border-2 text-left transition-all duration-200 ${
                 role === 'employer'
                   ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
-                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                  : 'border-slate-200 dark:border-[#232a3d] hover:border-slate-300'
               }`}
             >
               <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3 ${
-                role === 'employer' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'
+                role === 'employer' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-[#161c2b] text-slate-600'
               }`}>
                 <Briefcase className="w-6 h-6" />
               </div>
@@ -134,14 +137,14 @@ export function Onboarding() {
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t('onb.whoAreYou')}</h2>
             <p className="text-slate-500 dark:text-slate-400 mb-6">{t('onb.chooseRole')}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <button onClick={() => setRole('freelancer')} className={`p-6 rounded-2xl border-2 text-left transition-all duration-200 ${role === 'freelancer' ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>
-                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3 ${role === 'freelancer' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'}`}><PenTool className="w-6 h-6" /></div>
+              <button onClick={() => setRole('freelancer')} className={`p-6 rounded-2xl border-2 text-left transition-all duration-200 ${role === 'freelancer' ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-[#232a3d] hover:border-slate-300'}`}>
+                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3 ${role === 'freelancer' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-[#161c2b] text-slate-600'}`}><PenTool className="w-6 h-6" /></div>
                 <h3 className="font-bold text-slate-900 dark:text-white mb-1">{t('onb.freelancer')}</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">{t('onb.freelancer.desc')}</p>
                 {role === 'freelancer' && <Check className="w-5 h-5 text-brand-600 mt-3" />}
               </button>
-              <button onClick={() => setRole('employer')} className={`p-6 rounded-2xl border-2 text-left transition-all duration-200 ${role === 'employer' ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>
-                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3 ${role === 'employer' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600'}`}><Briefcase className="w-6 h-6" /></div>
+              <button onClick={() => setRole('employer')} className={`p-6 rounded-2xl border-2 text-left transition-all duration-200 ${role === 'employer' ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-[#232a3d] hover:border-slate-300'}`}>
+                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-3 ${role === 'employer' ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-[#161c2b] text-slate-600'}`}><Briefcase className="w-6 h-6" /></div>
                 <h3 className="font-bold text-slate-900 dark:text-white mb-1">{t('onb.employer')}</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">{t('onb.employer.desc')}</p>
                 {role === 'employer' && <Check className="w-5 h-5 text-brand-600 mt-3" />}
@@ -156,7 +159,7 @@ export function Onboarding() {
             <p className="text-slate-500 dark:text-slate-400 mb-6">{role === 'freelancer' ? t('onb.whichCategories.freelancer') : t('onb.whichCategories.employer')}</p>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map(cat => (
-                <button key={cat.key} onClick={() => toggleCategory(cat.key)} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${selectedCategories.includes(cat.key) ? 'bg-brand-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>{language === 'en' ? cat.labelEn : language === 'uz' ? cat.labelUz : cat.label}</button>
+                <button key={cat.key} onClick={() => toggleCategory(cat.key)} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${selectedCategories.includes(cat.key) ? 'bg-brand-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-[#161c2b] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1c2338]'}`}>{language === 'en' ? cat.labelEn : language === 'uz' ? cat.labelUz : cat.label}</button>
               ))}
             </div>
           </div>
@@ -178,7 +181,7 @@ export function Onboarding() {
             <p className="text-sm text-slate-500 mb-2">{t('onb.popular')}</p>
             <div className="flex flex-wrap gap-2">
               {SKILLS_LIBRARY.slice(0, 20).map(skill => (
-                <button key={skill} onClick={() => toggleSkill(skill)} className={`px-3 py-1.5 rounded-lg text-sm transition-all ${selectedSkills.includes(skill) ? 'hidden' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>+ {skill}</button>
+                <button key={skill} onClick={() => toggleSkill(skill)} className={`px-3 py-1.5 rounded-lg text-sm transition-all ${selectedSkills.includes(skill) ? 'hidden' : 'bg-slate-100 dark:bg-[#161c2b] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#1c2338]'}`}>+ {skill}</button>
               ))}
             </div>
           </div>
@@ -216,7 +219,7 @@ export function Onboarding() {
           </div>
         )}
 
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200 dark:border-[#232a3d]">
           <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="btn-ghost disabled:opacity-30">{t('onb.back')}</button>
           {step < 3 ? (
             <button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="btn-primary">{t('onb.next')} <ArrowRight className="w-4 h-4" /></button>
