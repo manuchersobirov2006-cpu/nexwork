@@ -129,10 +129,9 @@ export function GigModal({ userId, gig, onClose, onSaved }: {
   const [standard, setStandard] = useState<TierForm>(emptyTier(t('portfolio.myGigs.tier.standard')));
   const [premium, setPremium] = useState<TierForm>(emptyTier(t('portfolio.myGigs.tier.premium')));
 
-  const [extras, setExtras] = useState<{ id?: string; title: string; price: string; deliveryDaysDelta: string }[]>([]);
+  const [extras, setExtras] = useState<{ id?: string; title: string; price: string }[]>([]);
   const [extraTitle, setExtraTitle] = useState('');
   const [extraPrice, setExtraPrice] = useState('');
-  const [extraDays, setExtraDays] = useState('0');
 
   useEffect(() => {
     if (!gig) return;
@@ -145,14 +144,14 @@ export function GigModal({ userId, gig, onClose, onSaved }: {
       if (std) setStandard({ enabled: true, title: std.title, description: std.description || '', price: String(std.price), deliveryDays: String(std.delivery_days) });
       const prem = pkgs?.find(p => p.tier === 'premium');
       if (prem) setPremium({ enabled: true, title: prem.title, description: prem.description || '', price: String(prem.price), deliveryDays: String(prem.delivery_days) });
-      if (exts) setExtras((exts as GigExtra[]).map(e => ({ id: e.id, title: e.title, price: String(e.price), deliveryDaysDelta: String(e.delivery_days_delta) })));
+      if (exts) setExtras((exts as GigExtra[]).map(e => ({ id: e.id, title: e.title, price: String(e.price) })));
     })();
   }, [gig]);
 
   const addExtra = () => {
     if (!extraTitle.trim() || !extraPrice || Number(extraPrice) <= 0) return;
-    setExtras(prev => [...prev, { title: extraTitle.trim(), price: extraPrice, deliveryDaysDelta: extraDays || '0' }]);
-    setExtraTitle(''); setExtraPrice(''); setExtraDays('0');
+    setExtras(prev => [...prev, { title: extraTitle.trim(), price: extraPrice }]);
+    setExtraTitle(''); setExtraPrice('');
   };
 
   const addTag = () => {
@@ -208,7 +207,7 @@ export function GigModal({ userId, gig, onClose, onSaved }: {
       const validExtras = extras.filter(e => e.title.trim() && Number(e.price) > 0);
       if (validExtras.length > 0) {
         await supabase.from('gig_extras').insert(validExtras.map(e => ({
-          gig_id: savedGigId, title: e.title.trim(), price: Number(e.price), delivery_days_delta: Number(e.deliveryDaysDelta) || 0,
+          gig_id: savedGigId, title: e.title.trim(), price: Number(e.price),
         })));
       }
     }
@@ -311,16 +310,15 @@ export function GigModal({ userId, gig, onClose, onSaved }: {
               {extras.map((ex, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm p-2 bg-slate-50 dark:bg-[#161c2b]/50 rounded-lg">
                   <span className="flex-1 truncate">{ex.title}</span>
-                  <span className="text-slate-500 shrink-0">+{ex.price} · {Number(ex.deliveryDaysDelta) > 0 ? `+${ex.deliveryDaysDelta}${t('gigs.days')}` : Number(ex.deliveryDaysDelta) < 0 ? `${ex.deliveryDaysDelta}${t('gigs.days')}` : ''}</span>
+                  <span className="text-slate-500 shrink-0">+{ex.price}</span>
                   <button onClick={() => setExtras(prev => prev.filter((_, idx) => idx !== i))} className="text-error-600 shrink-0"><XIcon className="w-3.5 h-3.5" /></button>
                 </div>
               ))}
             </div>
           )}
-          <div className="grid grid-cols-4 gap-2">
-            <input type="text" value={extraTitle} onChange={e => setExtraTitle(e.target.value)} placeholder={t('portfolio.myGigs.extras.namePlaceholder')} className="input input-sm col-span-2" />
+          <div className="grid grid-cols-2 gap-2">
+            <input type="text" value={extraTitle} onChange={e => setExtraTitle(e.target.value)} placeholder={t('portfolio.myGigs.extras.namePlaceholder')} className="input input-sm" />
             <input type="text" inputMode="numeric" value={extraPrice} onChange={e => setExtraPrice(e.target.value.replace(/\D/g, ''))} placeholder={t('gigs.priceLabel')} className="input input-sm" />
-            <input type="text" inputMode="numeric" value={extraDays} onChange={e => setExtraDays(e.target.value.replace(/(?!^-)\D/g, ''))} placeholder="±дн" className="input input-sm" />
           </div>
           <button onClick={addExtra} className="btn-secondary text-xs mt-2"><Plus className="w-3.5 h-3.5" /> {t('portfolio.myGigs.extras.add')}</button>
         </div>
