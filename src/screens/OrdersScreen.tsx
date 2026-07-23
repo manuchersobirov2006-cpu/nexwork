@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { formatPrice, formatDateTime, timeAgo, daysUntil } from '../lib/format';
 import { acceptOrder, updateOrderTerms, deliverOrder, requestRevision, completeOrder, cancelOrder } from '../lib/orders';
-import { Avatar, Badge, EmptyState, Modal, Spinner } from '../components/ui';
+import { Avatar, Badge, EmptyState, Modal, Spinner, Stars } from '../components/ui';
 import { UserProfileModal } from '../components/UserProfileModal';
 import { t } from '../lib/i18n';
 import type { Order, Profile } from '../lib/types';
@@ -34,16 +34,21 @@ export function OrdersScreen({ onOpenChat }: { onOpenChat?: (userId: string) => 
   const [revisionMode, setRevisionMode] = useState(false);
   const [revisionDays, setRevisionDays] = useState(1);
   const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
+  const [reviewedOrderIds, setReviewedOrderIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     if (!profile) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('orders')
-      .select('*, gig:gig_id(*), project:project_id(*), buyer:buyer_id(*), seller:seller_id(*)')
-      .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
-      .order('created_at', { ascending: false });
+    const [{ data }, { data: myReviews }] = await Promise.all([
+      supabase
+        .from('orders')
+        .select('*, gig:gig_id(*), project:project_id(*), buyer:buyer_id(*), seller:seller_id(*)')
+        .or(`buyer_id.eq.${profile.id},seller_id.eq.${profile.id}`)
+        .order('created_at', { ascending: false }),
+      supabase.from('reviews').select('order_id').eq('reviewer_id', profile.id),
+    ]);
     if (data) setOrders(data as Order[]);
+    if (myReviews) setReviewedOrderIds(new Set(myReviews.map(r => r.order_id as string)));
     setLoading(false);
   }, [profile]);
 
@@ -121,12 +126,14 @@ export function OrdersScreen({ onOpenChat }: { onOpenChat?: (userId: string) => 
     setSavingReview(true);
     // Reviewee's rating / review_count are recomputed by an on_review_insert
     // DB trigger (the reviewer's session can't write to the reviewee's
-    // profile row directly under RLS).
+    // profile row directly under RLS). Reviewee is whichever party on the
+    // order isn't the current user, so this works for buyer -> seller and
+    // seller -> buyer reviews alike.
     await supabase.from('reviews').insert({
       order_id: reviewOrder.id,
       gig_id: reviewOrder.gig_id,
       reviewer_id: profile.id,
-      reviewee_id: reviewOrder.seller_id,
+      reviewee_id: reviewOrder.buyer_id === profile.id ? reviewOrder.seller_id : reviewOrder.buyer_id,
       rating: reviewRating,
       comment: reviewComment.trim() || null,
     });
@@ -191,7 +198,12 @@ export function OrdersScreen({ onOpenChat }: { onOpenChat?: (userId: string) => 
                   <Avatar src={other?.avatar_url ?? undefined} name={other?.display_name || other?.email} size={44} />
                   <div className="text-left">
                     <div className="font-semibold text-slate-900 dark:text-white">{other?.display_name || other?.full_name}</div>
-                    <div className="text-xs text-slate-500">{isSeller(order) ? t('orders.buyer') : t('orders.seller')}</div>
+                    <div className="text-xs text-slate-500 flex items-center gap-1.5">
+                      {isSeller(order) ? t('orders.buyer') : t('orders.seller')}
+                      {other && other.review_count > 0 && (
+                        <span className="flex items-center gap-1"><Stars rating={other.rating} size={11} />{other.rating.toFixed(1)}</span>
+                      )}
+                    </div>
                   </div>
                 </button>
                 {other && (
@@ -319,8 +331,15 @@ export function OrdersScreen({ onOpenChat }: { onOpenChat?: (userId: string) => 
               )}
 
               {order.status === 'completed' && (
-                <div className="px-4 py-3 bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-400 text-sm rounded-xl flex items-center gap-2">
-                  <PartyPopper className="w-4 h-4 shrink-0" /> {t('orders.congrats')}
+                <div className="space-y-2">
+                  <div className="px-4 py-3 bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-400 text-sm rounded-xl flex items-center gap-2">
+                    <PartyPopper className="w-4 h-4 shrink-0" /> {t('orders.congrats')}
+                  </div>
+                  {!reviewedOrderIds.has(order.id) && (
+                    <button onClick={() => { setActiveOrder(null); setReviewOrder(order); }} className="btn-secondary w-full">
+                      <Star className="w-4 h-4" /> {t('orders.review.leave')}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

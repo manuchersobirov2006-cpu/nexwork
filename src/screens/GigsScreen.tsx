@@ -7,6 +7,7 @@ import { Avatar, Badge, LevelBadge, Stars, EmptyState, SkeletonCard } from '../c
 import { GigOrderModal } from '../components/GigOrderModal';
 import { UserProfileModal } from '../components/UserProfileModal';
 import { GigModal } from '../components/MyGigsSection';
+import { RoleSwitchRequiredModal } from '../components/RoleSwitchRequiredModal';
 import { needsIdentityVerification } from '../lib/verification';
 import { VerificationRequiredNotice } from '../components/VerificationRequiredNotice';
 import { useTheme } from '../lib/theme';
@@ -34,6 +35,12 @@ export function GigsScreen() {
   const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [editingGig, setEditingGig] = useState<Gig | null>(null);
+  const [showRoleWarning, setShowRoleWarning] = useState(false);
+
+  const requireBuyerRole = () => {
+    if (profile?.role === 'freelancer') { setShowRoleWarning(true); return false; }
+    return true;
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -146,7 +153,7 @@ export function GigsScreen() {
             return (
               <div
                 key={gig.id}
-                onClick={() => { if (profile && !isOwn) setOrderingGig(gig); }}
+                onClick={() => { if (profile && !isOwn && requireBuyerRole()) setOrderingGig(gig); }}
                 className={`card overflow-hidden hover:shadow-card-hover transition-all duration-200 group animate-fade-in ${isOwn ? '' : 'cursor-pointer'}`}
               >
                 <div className="relative h-36 bg-slate-100 dark:bg-[#161c2b] overflow-hidden">
@@ -203,7 +210,7 @@ export function GigsScreen() {
                         </button>
                       </div>
                     ) : profile && (
-                      <button onClick={(e) => { e.stopPropagation(); setOrderingGig(gig); }} className="btn-secondary !px-3 !py-1.5 text-xs">
+                      <button onClick={(e) => { e.stopPropagation(); if (requireBuyerRole()) setOrderingGig(gig); }} className="btn-secondary !px-3 !py-1.5 text-xs">
                         {t('gigs.details')}
                       </button>
                     )}
@@ -239,6 +246,10 @@ export function GigsScreen() {
           onClose={() => setEditingGig(null)}
           onSaved={() => { setEditingGig(null); load(); }}
         />
+      )}
+
+      {showRoleWarning && (
+        <RoleSwitchRequiredModal onClose={() => setShowRoleWarning(false)} />
       )}
     </div>
   );

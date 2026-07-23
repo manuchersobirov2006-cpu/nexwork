@@ -10,6 +10,7 @@ import { SOCIAL_PLATFORMS } from '../lib/socialLinks';
 import { isTopSpecialist } from '../lib/freelancerLevel';
 import { formatPrice } from '../lib/format';
 import { GigOrderModal } from './GigOrderModal';
+import { RoleSwitchRequiredModal } from './RoleSwitchRequiredModal';
 import type { Profile, PortfolioItem, Certificate, Review, Gig } from '../lib/types';
 import {
   Award, Briefcase, ExternalLink, FolderOpen, MapPin, MessageCircle,
@@ -29,6 +30,7 @@ export function UserProfileModal({ userId, onClose, onMessage }: {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [gigs, setGigs] = useState<Gig[]>([]);
   const [orderingGig, setOrderingGig] = useState<Gig | null>(null);
+  const [showRoleWarning, setShowRoleWarning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeItem, setActiveItem] = useState<PortfolioItem | null>(null);
 
@@ -124,7 +126,7 @@ export function UserProfileModal({ userId, onClose, onMessage }: {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {viewer && viewer.id !== profile.id && profile.role === 'freelancer' && (
-                <button onClick={() => { setOrderSuccess(false); setShowOrderForm(true); }} className="btn-secondary">
+                <button onClick={() => { if (viewer?.role === 'freelancer') { setShowRoleWarning(true); return; } setOrderSuccess(false); setShowOrderForm(true); }} className="btn-secondary">
                   <ShoppingCart className="w-4 h-4" /> {t('profileModal.order.button')}
                 </button>
               )}
@@ -230,7 +232,7 @@ export function UserProfileModal({ userId, onClose, onMessage }: {
               <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3">{t('portfolio.myGigs.title')}</h3>
               <div className="grid sm:grid-cols-2 gap-3">
                 {gigs.map(g => (
-                  <button key={g.id} onClick={() => setOrderingGig(g)} className="card p-3 text-left hover:shadow-card-hover transition-all flex items-center gap-3">
+                  <button key={g.id} onClick={() => { if (viewer?.role === 'freelancer') setShowRoleWarning(true); else setOrderingGig(g); }} className="card p-3 text-left hover:shadow-card-hover transition-all flex items-center gap-3">
                     {g.image_urls[0] ? (
                       <img src={g.image_urls[0]} alt={g.title} className="w-14 h-14 rounded-lg object-cover shrink-0" />
                     ) : (
@@ -323,6 +325,10 @@ export function UserProfileModal({ userId, onClose, onMessage }: {
 
       {orderingGig && (
         <GigOrderModal gig={orderingGig} onClose={() => setOrderingGig(null)} />
+      )}
+
+      {showRoleWarning && (
+        <RoleSwitchRequiredModal onClose={() => setShowRoleWarning(false)} />
       )}
     </Modal>
   );
