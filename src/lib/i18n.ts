@@ -244,6 +244,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'gigs.publish': 'Опубликовать',
     'gigs.newOrder.title': 'Новый заказ!',
     'gigs.newOrder.body': 'Заказ на услугу',
+    'gigs.viewPortfolio': 'Посмотреть работы',
     // Specialists
     'specialists.title': 'Специалисты',
     'specialists.subtitle': 'Найдите проверенного специалиста для вашей задачи',
@@ -1145,6 +1146,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'gigs.publish': 'Eʼlon qilish',
     'gigs.newOrder.title': 'Yangi buyurtma!',
     'gigs.newOrder.body': 'Xizmat uchun buyurtma',
+    'gigs.viewPortfolio': 'Ishlarni koʻrish',
     // Specialists
     'specialists.title': 'Mutaxassislar',
     'specialists.subtitle': 'Vazifangiz uchun ishonchli mutaxassisni toping',
@@ -2030,6 +2032,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'gigs.publish': 'Publish',
     'gigs.newOrder.title': 'New order!',
     'gigs.newOrder.body': 'Order for gig',
+    'gigs.viewPortfolio': 'View portfolio',
     // Specialists
     'specialists.title': 'Specialists',
     'specialists.subtitle': 'Find a trusted specialist for your task',

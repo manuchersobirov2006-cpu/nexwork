@@ -3,9 +3,11 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { t } from '../lib/i18n';
 import { formatPrice } from '../lib/format';
-import { Modal, Spinner } from './ui';
-import type { Gig, GigPackage, GigExtra } from '../lib/types';
-import { Check, ShoppingCart, Clock } from 'lucide-react';
+import { Modal, Spinner, Avatar } from './ui';
+import { getOrCreateChat } from '../lib/bids';
+import { UserProfileModal } from './UserProfileModal';
+import type { Gig, GigPackage, GigExtra, Profile } from '../lib/types';
+import { Check, ShoppingCart, Clock, FolderOpen, ShieldCheck } from 'lucide-react';
 
 const TIER_ORDER: GigPackage['tier'][] = ['basic', 'standard', 'premium'];
 
@@ -17,6 +19,8 @@ export function GigOrderModal({ gig, onClose, onOrdered }: {
   const { profile: viewer } = useAuth();
   const [packages, setPackages] = useState<GigPackage[]>([]);
   const [extras, setExtras] = useState<GigExtra[]>([]);
+  const [seller, setSeller] = useState<Profile | null>(null);
+  const [viewingPortfolio, setViewingPortfolio] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedTier, setSelectedTier] = useState<GigPackage['tier']>('basic');
   const [selectedExtraIds, setSelectedExtraIds] = useState<Set<string>>(new Set());
@@ -26,14 +30,16 @@ export function GigOrderModal({ gig, onClose, onOrdered }: {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: pkgs }, { data: exts }] = await Promise.all([
+    const [{ data: pkgs }, { data: exts }, { data: sellerData }] = await Promise.all([
       supabase.from('gig_packages').select('*').eq('gig_id', gig.id),
       supabase.from('gig_extras').select('*').eq('gig_id', gig.id),
+      supabase.from('profiles').select('*').eq('id', gig.seller_id).single(),
     ]);
     setPackages(((pkgs as GigPackage[] | null) ?? []).sort((a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier)));
     setExtras((exts as GigExtra[] | null) ?? []);
+    setSeller((sellerData as Profile | null) ?? null);
     setLoading(false);
-  }, [gig.id]);
+  }, [gig.id, gig.seller_id]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -70,6 +76,18 @@ export function GigOrderModal({ gig, onClose, onOrdered }: {
         user_id: gig.seller_id, type: 'order', title: t('gigs.newOrder.title'),
         body: `${t('gigs.newOrder.body')} "${gig.title}"`, link: 'orders',
       });
+
+      const chatId = await getOrCreateChat(viewer.id, gig.seller_id);
+      const messageLines = [
+        `🛒 ${t('gigs.newOrder.title')}: «${gig.title}»`,
+        activePackage ? `${activePackage.title} — ${formatPrice(totalPrice)}` : formatPrice(totalPrice),
+      ];
+      if (requirements.trim()) messageLines.push(requirements.trim());
+      await supabase.from('messages').insert({
+        chat_id: chatId, sender_id: viewer.id, content: messageLines.join('\n'), message_type: 'text', metadata: {},
+      });
+      await supabase.from('chats').update({ last_message: messageLines[0], last_message_at: new Date().toISOString() }).eq('id', chatId);
+
       setSuccess(true);
       onOrdered?.();
       setTimeout(onClose, 1200);
@@ -83,6 +101,24 @@ export function GigOrderModal({ gig, onClose, onOrdered }: {
           <div className="flex justify-center py-10"><Spinner className="w-6 h-6 text-brand-600" /></div>
         ) : (
           <>
+            {seller && (
+              <button
+                onClick={() => setViewingPortfolio(true)}
+                className="w-full flex items-center gap-3 p-3 mb-4 rounded-xl bg-slate-50 dark:bg-[#161c2b]/50 hover:bg-slate-100 dark:hover:bg-[#161c2b] transition-colors text-left"
+              >
+                <Avatar src={seller.avatar_url ?? undefined} name={seller.display_name || seller.full_name || seller.email} size={36} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-medium text-slate-900 dark:text-white truncate">{seller.display_name || seller.full_name}</span>
+                    {seller.is_verified && <ShieldCheck className="w-3.5 h-3.5 text-brand-500 shrink-0" />}
+                  </div>
+                  <span className="text-xs text-brand-600 dark:text-brand-400 flex items-center gap-1">
+                    <FolderOpen className="w-3 h-3" /> {t('gigs.viewPortfolio')}
+                  </span>
+                </div>
+              </button>
+            )}
+
             {packages.length > 1 && (
               <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: `repeat(${packages.length}, minmax(0, 1fr))` }}>
                 {packages.map(p => (
@@ -146,6 +182,10 @@ export function GigOrderModal({ gig, onClose, onOrdered }: {
           </>
         )}
       </div>
+
+      {viewingPortfolio && (
+        <UserProfileModal userId={gig.seller_id} onClose={() => setViewingPortfolio(false)} />
+      )}
     </Modal>
   );
 }
