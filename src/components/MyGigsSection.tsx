@@ -204,7 +204,8 @@ export function GigModal({ userId, gig, onClose, onSaved }: {
       }
 
       await supabase.from('gig_extras').delete().eq('gig_id', savedGigId);
-      const validExtras = extras.filter(e => e.title.trim() && Number(e.price) > 0);
+      const pendingExtra = extraTitle.trim() && Number(extraPrice) > 0 ? [{ title: extraTitle, price: extraPrice }] : [];
+      const validExtras = [...extras, ...pendingExtra].filter(e => e.title.trim() && Number(e.price) > 0);
       if (validExtras.length > 0) {
         await supabase.from('gig_extras').insert(validExtras.map(e => ({
           gig_id: savedGigId, title: e.title.trim(), price: Number(e.price),
