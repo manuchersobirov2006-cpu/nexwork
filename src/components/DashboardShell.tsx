@@ -62,6 +62,7 @@ export function DashboardShell({
   const getTranslatedNotification = useTranslatedNotifications(notifications);
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadChats, setUnreadChats] = useState(0);
+  const [activeOrders, setActiveOrders] = useState(0);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
 
   useEffect(() => {
@@ -92,14 +93,28 @@ export function DashboardShell({
     if (count !== null) setUnreadChats(count);
   }, [profile]);
 
+  const loadActiveOrders = useCallback(async () => {
+    if (!profile) return;
+    // "Needs your attention" count: pending/active orders where you're the
+    // seller (accept / deliver), or delivered orders where you're the buyer
+    // (accept / request revision) — mirrors the actionable states in
+    // OrdersScreen rather than every open order.
+    const { count } = await supabase
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .or(`and(seller_id.eq.${profile.id},status.in.(pending,active)),and(buyer_id.eq.${profile.id},status.eq.delivered)`);
+    if (count !== null) setActiveOrders(count);
+  }, [profile]);
+
   useEffect(() => {
     loadNotifications();
     loadUnreadChats();
-    const interval = setInterval(() => { loadNotifications(); loadUnreadChats(); }, 30000);
+    loadActiveOrders();
+    const interval = setInterval(() => { loadNotifications(); loadUnreadChats(); loadActiveOrders(); }, 30000);
     const onMessagesRead = () => loadUnreadChats();
     window.addEventListener('messages-read', onMessagesRead);
     return () => { clearInterval(interval); window.removeEventListener('messages-read', onMessagesRead); };
-  }, [loadNotifications, loadUnreadChats]);
+  }, [loadNotifications, loadUnreadChats, loadActiveOrders]);
 
   const markAllRead = async () => {
     if (!profile) return;
@@ -139,14 +154,16 @@ export function DashboardShell({
 
         {profile && (profile.role === 'freelancer' || profile.role === 'employer') && (
           <div className="p-3 pb-0">
-            <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 dark:bg-[#161c2b] rounded-xl">
+            <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 dark:bg-[#0a0e17] rounded-2xl ring-1 ring-slate-200 dark:ring-[#232a3d]">
               <button
                 type="button"
                 disabled={switchingRole}
                 onClick={() => handleSwitchRole('freelancer')}
                 className={classNames(
-                  'flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all',
-                  profile.role === 'freelancer' ? 'bg-white dark:bg-[#0c101c] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'
+                  'flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200',
+                  profile.role === 'freelancer'
+                    ? 'bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-[0_0_14px_rgba(59,130,246,0.45)]'
+                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                 )}
               >
                 <Briefcase className="w-3.5 h-3.5" /> {t('role.freelancer')}
@@ -156,8 +173,10 @@ export function DashboardShell({
                 disabled={switchingRole}
                 onClick={() => handleSwitchRole('employer')}
                 className={classNames(
-                  'flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all',
-                  profile.role === 'employer' ? 'bg-white dark:bg-[#0c101c] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'
+                  'flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200',
+                  profile.role === 'employer'
+                    ? 'bg-gradient-to-br from-accent-500 to-accent-600 text-white shadow-[0_0_14px_rgba(45,212,191,0.45)]'
+                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                 )}
               >
                 <Building2 className="w-3.5 h-3.5" /> {t('role.employer')}
@@ -182,6 +201,11 @@ export function DashboardShell({
                 {item.key === 'chat' && unreadChats > 0 && (
                   <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-error-500 text-white text-[10px] font-bold flex items-center justify-center">
                     {unreadChats > 99 ? '99+' : unreadChats}
+                  </span>
+                )}
+                {item.key === 'orders' && activeOrders > 0 && (
+                  <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-brand-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {activeOrders > 99 ? '99+' : activeOrders}
                   </span>
                 )}
               </button>
