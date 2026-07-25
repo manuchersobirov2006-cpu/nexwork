@@ -63,25 +63,30 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
     return t('dash.evening');
   })();
 
+  // Every icon badge on this screen shares one gradient treatment (brand ->
+  // accent) instead of a different flat color per card/action, so the
+  // screen reads as one consistent system rather than a scattered palette.
+  const ICON_GRADIENT = 'bg-gradient-to-br from-brand-500 to-accent-500 text-white shadow-sm';
+
   const stats = [
-    { label: t('dash.stat.earned'), value: formatPrice(completedRevenue), icon: DollarSign, color: 'success' },
-    { label: t('dash.stat.activeOrders'), value: activeOrders.length.toString(), icon: ShoppingCart, color: 'blue' },
-    { label: t('dash.stat.views'), value: totalViews.toString(), icon: Eye, color: 'accent' },
-    { label: t('dash.stat.gigs'), value: gigs.length.toString(), icon: Package, color: 'amber' },
+    { label: t('dash.stat.earned'), value: formatPrice(completedRevenue), icon: DollarSign },
+    { label: t('dash.stat.activeOrders'), value: activeOrders.length.toString(), icon: ShoppingCart },
+    { label: t('dash.stat.views'), value: totalViews.toString(), icon: Eye },
+    { label: t('dash.stat.gigs'), value: gigs.length.toString(), icon: Package },
   ];
 
   const quickActions = profile.role === 'freelancer'
     ? [
-        { label: t('dash.action.createGig'), icon: Plus, screen: 'portfolio' as ScreenKey, color: 'bg-brand-600' },
-        { label: t('dash.action.findTenders'), icon: Gavel, screen: 'board' as ScreenKey, color: 'bg-accent-600' },
-        { label: t('dash.action.messages'), icon: MessageSquare, screen: 'chat' as ScreenKey, color: 'bg-success-600' },
-        { label: t('dash.action.analytics'), icon: TrendingUp, screen: 'analytics' as ScreenKey, color: 'bg-purple-600' },
+        { label: t('dash.action.createGig'), icon: Plus, screen: 'portfolio' as ScreenKey },
+        { label: t('dash.action.findTenders'), icon: Gavel, screen: 'board' as ScreenKey },
+        { label: t('dash.action.messages'), icon: MessageSquare, screen: 'chat' as ScreenKey },
+        { label: t('dash.action.analytics'), icon: TrendingUp, screen: 'analytics' as ScreenKey },
       ]
     : [
-        { label: t('dash.action.postProject'), icon: Plus, screen: 'board' as ScreenKey, color: 'bg-brand-600' },
-        { label: t('dash.action.findGigs'), icon: Package, screen: 'gigs' as ScreenKey, color: 'bg-accent-600' },
-        { label: t('dash.action.messages'), icon: MessageSquare, screen: 'chat' as ScreenKey, color: 'bg-success-600' },
-        { label: t('dash.action.companies'), icon: Package, screen: 'companies' as ScreenKey, color: 'bg-purple-600' },
+        { label: t('dash.action.postProject'), icon: Plus, screen: 'board' as ScreenKey },
+        { label: t('dash.action.findGigs'), icon: Package, screen: 'gigs' as ScreenKey },
+        { label: t('dash.action.messages'), icon: MessageSquare, screen: 'chat' as ScreenKey },
+        { label: t('dash.action.companies'), icon: Package, screen: 'companies' as ScreenKey },
       ];
 
   return (
@@ -102,7 +107,7 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
       <div className="flex flex-wrap gap-3 sm:gap-4 mb-4 sm:mb-6">
         {stats.map((stat, i) => (
           <div key={i} className="card p-3.5 sm:p-5 animate-slide-up min-w-0 w-[calc(50%-6px)] sm:w-[calc(50%-8px)] lg:w-[calc(25%-12px)]" style={{ animationDelay: `${i * 80}ms` }}>
-            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center mb-2 sm:mb-3 bg-${stat.color}-100 dark:bg-${stat.color}-900/20 text-${stat.color}-600 dark:text-${stat.color}-400`}>
+            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center mb-2 sm:mb-3 ${ICON_GRADIENT}`}>
               <stat.icon className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</div>
@@ -122,7 +127,7 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
                 onClick={() => onNavigate(action.screen)}
                 className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-[#161c2b]/50 hover:bg-slate-100 dark:hover:bg-[#161c2b] transition-colors group min-w-0 w-[calc(50%-4px)] sm:w-[calc(50%-6px)]"
               >
-                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl ${action.color} text-white flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl ${ICON_GRADIENT} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                   <action.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <span className="text-[11px] sm:text-xs font-medium text-slate-700 dark:text-slate-300 text-center break-words">{action.label}</span>
@@ -182,7 +187,7 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
                 const tn = getTranslatedNotification(n);
                 return (
                   <div key={n.id} className={`flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl ${!n.is_read ? 'bg-brand-50/50 dark:bg-brand-900/10' : 'bg-slate-50 dark:bg-[#161c2b]/50'}`}>
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0">
+                    <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${ICON_GRADIENT} flex items-center justify-center shrink-0`}>
                       <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -206,8 +211,8 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
             <div className="space-y-2">
               {gigs.map(gig => (
                 <div key={gig.id} className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 bg-slate-50 dark:bg-[#161c2b]/50 rounded-xl">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center shrink-0">
-                    <Package className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600 dark:text-brand-400" />
+                  <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg ${ICON_GRADIENT} flex items-center justify-center shrink-0`}>
+                    <Package className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{gig.title}</div>
@@ -232,8 +237,8 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
             <div className="space-y-2">
               {projects.map(p => (
                 <div key={p.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-[#161c2b]/50 rounded-xl">
-                  <div className="w-10 h-10 rounded-lg bg-accent-100 dark:bg-accent-900/30 flex items-center justify-center shrink-0">
-                    <Gavel className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+                  <div className={`w-10 h-10 rounded-lg ${ICON_GRADIENT} flex items-center justify-center shrink-0`}>
+                    <Gavel className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{p.title}</div>
