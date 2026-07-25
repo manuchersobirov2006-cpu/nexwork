@@ -3,12 +3,16 @@ import { useAuth } from '../lib/auth';
 import { useTheme } from '../lib/theme';
 import { supabase } from '../lib/supabase';
 import { timeAgo, classNames } from '../lib/format';
-import { Avatar } from './ui';
+import { Avatar, Spinner } from './ui';
 import { t } from '../lib/i18n';
 import { useTranslatedNotifications } from '../lib/useTranslatedNotifications';
 import { consumeNotifPromptPending } from '../lib/pushNotifications';
 import { EnableNotificationsModal } from './EnableNotificationsModal';
-import type { Notification } from '../lib/types';
+import { UserProfileModal } from './UserProfileModal';
+import { GigOrderModal } from './GigOrderModal';
+import { RoleSwitchRequiredModal } from './RoleSwitchRequiredModal';
+import { formatPrice } from '../lib/format';
+import type { Notification, Gig, Profile } from '../lib/types';
 import {
   Sun, Moon, Bell, Search, LogOut, Menu, X, Settings,
   LayoutGrid, Gavel, MessageSquare, ShieldCheck,
@@ -63,6 +67,14 @@ export function DashboardShell({
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadChats, setUnreadChats] = useState(0);
   const [activeOrders, setActiveOrders] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [searchGigs, setSearchGigs] = useState<Gig[]>([]);
+  const [searchSpecialists, setSearchSpecialists] = useState<Profile[]>([]);
+  const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
+  const [orderingGig, setOrderingGig] = useState<Gig | null>(null);
+  const [showRoleWarning, setShowRoleWarning] = useState(false);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
 
   useEffect(() => {
@@ -115,6 +127,35 @@ export function DashboardShell({
     window.addEventListener('messages-read', onMessagesRead);
     return () => { clearInterval(interval); window.removeEventListener('messages-read', onMessagesRead); };
   }, [loadNotifications, loadUnreadChats, loadActiveOrders]);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (query.length < 2) { setSearchGigs([]); setSearchSpecialists([]); setSearching(false); return; }
+    setSearching(true);
+    const timeout = setTimeout(async () => {
+      const [{ data: gigs }, { data: specialists }] = await Promise.all([
+        supabase.from('gigs').select('*, seller:seller_id(*)').eq('status', 'active')
+          .or(`title.ilike.%${query}%,description.ilike.%${query}%`).limit(5),
+        supabase.from('profiles').select('*').eq('role', 'freelancer').in('verification_level', ['identity', 'full'])
+          .or(`display_name.ilike.%${query}%,full_name.ilike.%${query}%`).limit(5),
+      ]);
+      setSearchGigs((gigs as Gig[] | null) ?? []);
+      setSearchSpecialists((specialists as Profile[] | null) ?? []);
+      setSearching(false);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
+
+  const handleSelectGig = (gig: Gig) => {
+    setSearchOpen(false);
+    if (profile?.role === 'freelancer') { setShowRoleWarning(true); return; }
+    setOrderingGig(gig);
+  };
+
+  const handleSelectSpecialist = (id: string) => {
+    setSearchOpen(false);
+    setViewingProfileId(id);
+  };
 
   const markAllRead = async () => {
     if (!profile) return;
@@ -242,9 +283,50 @@ export function DashboardShell({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={e => { setSearchQuery(e.target.value); setSearchOpen(true); }}
+                onFocus={() => setSearchOpen(true)}
                 placeholder={t('nav.search')}
                 className="input-sm input pl-9 w-64"
               />
+
+              {searchOpen && searchQuery.trim().length >= 2 && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setSearchOpen(false)} />
+                  <div className="absolute left-0 top-full mt-2 w-96 card shadow-card-hover z-40 animate-slide-down max-h-96 overflow-y-auto scrollbar-thin">
+                    {searching ? (
+                      <div className="p-6 flex justify-center"><Spinner className="w-5 h-5 text-brand-600" /></div>
+                    ) : searchGigs.length === 0 && searchSpecialists.length === 0 ? (
+                      <div className="p-6 text-center text-sm text-slate-500">{t('search.noResults')}</div>
+                    ) : (
+                      <>
+                        {searchSpecialists.length > 0 && (
+                          <div className="p-2">
+                            <div className="px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">{t('nav.specialists')}</div>
+                            {searchSpecialists.map(s => (
+                              <button key={s.id} onClick={() => handleSelectSpecialist(s.id)} className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#161c2b] transition-colors text-left">
+                                <Avatar src={s.avatar_url ?? undefined} name={s.display_name || s.full_name} size={28} />
+                                <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{s.display_name || s.full_name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {searchGigs.length > 0 && (
+                          <div className="p-2 border-t border-slate-100 dark:border-[#232a3d]">
+                            <div className="px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">{t('nav.services')}</div>
+                            {searchGigs.map(g => (
+                              <button key={g.id} onClick={() => handleSelectGig(g)} className="w-full flex items-center justify-between gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#161c2b] transition-colors text-left">
+                                <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{g.title}</span>
+                                <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 shrink-0">{formatPrice(g.price)}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -321,6 +403,18 @@ export function DashboardShell({
       </div>
 
       {showNotifPrompt && <EnableNotificationsModal onClose={() => setShowNotifPrompt(false)} />}
+
+      {viewingProfileId && (
+        <UserProfileModal userId={viewingProfileId} onClose={() => setViewingProfileId(null)} />
+      )}
+
+      {orderingGig && (
+        <GigOrderModal gig={orderingGig} onClose={() => setOrderingGig(null)} />
+      )}
+
+      {showRoleWarning && (
+        <RoleSwitchRequiredModal onClose={() => setShowRoleWarning(false)} />
+      )}
     </div>
   );
 }

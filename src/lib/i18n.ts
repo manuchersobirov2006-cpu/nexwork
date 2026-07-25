@@ -65,6 +65,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'support.bot.fallback.2': 'Хм, не совсем понял вопрос. Попробуйте переформулировать или напишите напрямую в Telegram — там ответит живой человек.',
     'support.bot.fallback.3': 'Такого я пока не умею объяснять. Лучше напишите в Telegram или позвоните — разберёмся быстрее.',
     'nav.search': 'Поиск...',
+    'search.noResults': 'Ничего не найдено',
     // Landing
     'landing.nav.features': 'Возможности',
     'landing.nav.how': 'Как это работает',
@@ -977,6 +978,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'support.bot.fallback.3': 'Buni hali tushuntira olmayman. Telegramga yozing yoki qoʻngʻiroq qiling — tezroq yordam beramiz.',
     'nav.cabinet': 'Kabinet',
     'nav.search': 'Qidiruv...',
+    'search.noResults': 'Hech narsa topilmadi',
     'landing.nav.features': 'Imkoniyatlar',
     'landing.nav.how': 'Bu qanday ishlaydi',
     'landing.nav.categories': 'Kategoriyalar',
@@ -1867,6 +1869,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'support.bot.fallback.2': "Hmm, I didn't quite catch that. Try rephrasing, or message us directly on Telegram for a human reply.",
     'support.bot.fallback.3': "I don't know how to explain that yet. Message us on Telegram or call — we'll sort it out faster.",
     'nav.search': 'Search...',
+    'search.noResults': 'No results found',
     'landing.nav.features': 'Features',
     'landing.nav.how': 'How it works',
     'landing.nav.categories': 'Categories',
