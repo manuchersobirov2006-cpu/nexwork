@@ -290,7 +290,7 @@ function ApplicantsView() {
   );
 }
 
-function JobDetailModal({ job, onClose, onApplied }: { job: Job; onClose: () => void; onApplied?: () => void }) {
+export function JobDetailModal({ job, onClose, onApplied }: { job: Job; onClose: () => void; onApplied?: () => void }) {
   const { profile } = useAuth();
   const employer = job.employer as unknown as Profile | undefined;
   const [coverLetter, setCoverLetter] = useState('');

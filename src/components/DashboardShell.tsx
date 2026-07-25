@@ -11,8 +11,9 @@ import { EnableNotificationsModal } from './EnableNotificationsModal';
 import { UserProfileModal } from './UserProfileModal';
 import { GigOrderModal } from './GigOrderModal';
 import { RoleSwitchRequiredModal } from './RoleSwitchRequiredModal';
+import { JobDetailModal } from '../screens/CompaniesScreen';
 import { formatPrice } from '../lib/format';
-import type { Notification, Gig, Profile } from '../lib/types';
+import type { Notification, Gig, Profile, Job } from '../lib/types';
 import {
   Sun, Moon, Bell, Search, LogOut, Menu, X, Settings,
   LayoutGrid, Gavel, MessageSquare, ShieldCheck,
@@ -72,8 +73,10 @@ export function DashboardShell({
   const [searching, setSearching] = useState(false);
   const [searchGigs, setSearchGigs] = useState<Gig[]>([]);
   const [searchSpecialists, setSearchSpecialists] = useState<Profile[]>([]);
+  const [searchJobs, setSearchJobs] = useState<Job[]>([]);
   const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
   const [orderingGig, setOrderingGig] = useState<Gig | null>(null);
+  const [viewingJob, setViewingJob] = useState<Job | null>(null);
   const [showRoleWarning, setShowRoleWarning] = useState(false);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
 
@@ -130,17 +133,20 @@ export function DashboardShell({
 
   useEffect(() => {
     const query = searchQuery.trim();
-    if (query.length < 2) { setSearchGigs([]); setSearchSpecialists([]); setSearching(false); return; }
+    if (query.length < 2) { setSearchGigs([]); setSearchSpecialists([]); setSearchJobs([]); setSearching(false); return; }
     setSearching(true);
     const timeout = setTimeout(async () => {
-      const [{ data: gigs }, { data: specialists }] = await Promise.all([
+      const [{ data: gigs }, { data: specialists }, { data: jobs }] = await Promise.all([
         supabase.from('gigs').select('*, seller:seller_id(*)').eq('status', 'active')
           .or(`title.ilike.%${query}%,description.ilike.%${query}%`).limit(5),
         supabase.from('profiles').select('*').eq('role', 'freelancer').in('verification_level', ['identity', 'full'])
           .or(`display_name.ilike.%${query}%,full_name.ilike.%${query}%`).limit(5),
+        supabase.from('jobs').select('*, employer:employer_id(*)').eq('status', 'active')
+          .or(`title.ilike.%${query}%,description.ilike.%${query}%`).limit(5),
       ]);
       setSearchGigs((gigs as Gig[] | null) ?? []);
       setSearchSpecialists((specialists as Profile[] | null) ?? []);
+      setSearchJobs((jobs as Job[] | null) ?? []);
       setSearching(false);
     }, 300);
     return () => clearTimeout(timeout);
@@ -155,6 +161,11 @@ export function DashboardShell({
   const handleSelectSpecialist = (id: string) => {
     setSearchOpen(false);
     setViewingProfileId(id);
+  };
+
+  const handleSelectJob = (job: Job) => {
+    setSearchOpen(false);
+    setViewingJob(job);
   };
 
   const markAllRead = async () => {
@@ -296,7 +307,7 @@ export function DashboardShell({
                   <div className="absolute left-0 top-full mt-2 w-96 card shadow-card-hover z-40 animate-slide-down max-h-96 overflow-y-auto scrollbar-thin">
                     {searching ? (
                       <div className="p-6 flex justify-center"><Spinner className="w-5 h-5 text-brand-600" /></div>
-                    ) : searchGigs.length === 0 && searchSpecialists.length === 0 ? (
+                    ) : searchGigs.length === 0 && searchSpecialists.length === 0 && searchJobs.length === 0 ? (
                       <div className="p-6 text-center text-sm text-slate-500">{t('search.noResults')}</div>
                     ) : (
                       <>
@@ -318,6 +329,17 @@ export function DashboardShell({
                               <button key={g.id} onClick={() => handleSelectGig(g)} className="w-full flex items-center justify-between gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#161c2b] transition-colors text-left">
                                 <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{g.title}</span>
                                 <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 shrink-0">{formatPrice(g.price)}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {searchJobs.length > 0 && (
+                          <div className="p-2 border-t border-slate-100 dark:border-[#232a3d]">
+                            <div className="px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">{t('nav.companies')}</div>
+                            {searchJobs.map(j => (
+                              <button key={j.id} onClick={() => handleSelectJob(j)} className="w-full flex items-center justify-between gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#161c2b] transition-colors text-left">
+                                <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{j.title}</span>
+                                {j.salary_min != null && <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 shrink-0">{formatPrice(j.salary_min)}</span>}
                               </button>
                             ))}
                           </div>
@@ -410,6 +432,10 @@ export function DashboardShell({
 
       {orderingGig && (
         <GigOrderModal gig={orderingGig} onClose={() => setOrderingGig(null)} />
+      )}
+
+      {viewingJob && (
+        <JobDetailModal job={viewingJob} onClose={() => setViewingJob(null)} />
       )}
 
       {showRoleWarning && (
