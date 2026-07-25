@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { formatPrice, timeAgo } from '../lib/format';
 import { Avatar, Badge, Stars, Spinner, EmptyState } from '../components/ui';
 import { AdBanner } from '../components/AdBanner';
+import { FaqSection } from '../components/FaqSection';
 import { UserProfileModal } from '../components/UserProfileModal';
 import { t } from '../lib/i18n';
 import { useTranslatedNotifications } from '../lib/useTranslatedNotifications';
@@ -247,6 +248,8 @@ export function DashboardOverview({ onNavigate }: { onNavigate: (s: ScreenKey) =
           </div>
         )}
       </div>
+
+      <FaqSection />
 
       {viewingProfileId && <UserProfileModal userId={viewingProfileId} onClose={() => setViewingProfileId(null)} />}
     </div>
