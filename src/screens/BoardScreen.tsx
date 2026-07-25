@@ -14,8 +14,27 @@ import { translateText } from '../lib/translate';
 import type { Project, Bid, Profile, PortfolioItem } from '../lib/types';
 import {
   Plus, Clock, DollarSign, Users, Gavel,
-  Check, MessageSquare, Calendar, ExternalLink, Briefcase, Languages
+  Check, MessageSquare, Calendar, ExternalLink, Briefcase, Languages, UserCheck, Package
 } from 'lucide-react';
+
+interface EmployerStats {
+  projectsCount: number;
+  ordersCount: number;
+  hiredCount: number;
+}
+
+function EmployerStatsRow({ stats, employer }: { stats: EmployerStats | undefined; employer: Profile | undefined }) {
+  if (!employer) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+      {employer.review_count > 0 && (
+        <span className="flex items-center gap-1"><Stars rating={employer.rating} size={11} />{employer.rating.toFixed(1)}</span>
+      )}
+      <span className="flex items-center gap-1"><Package className="w-3 h-3" />{stats?.ordersCount ?? 0} {t('board.employerStats.orders')}</span>
+      <span className="flex items-center gap-1"><UserCheck className="w-3 h-3" />{stats?.hiredCount ?? 0} {t('board.employerStats.hired')}</span>
+    </div>
+  );
+}
 
 export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => void }) {
   const { profile } = useAuth();
@@ -30,6 +49,25 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [myBids, setMyBids] = useState<Set<string>>(new Set());
   const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
+  const [employerStats, setEmployerStats] = useState<Record<string, EmployerStats>>({});
+
+  const loadEmployerStats = useCallback(async (employerIds: string[]) => {
+    const missing = employerIds.filter(id => !(id in employerStats));
+    if (missing.length === 0) return;
+    const entries = await Promise.all(missing.map(async id => {
+      const [{ count: projectsCount }, { data: orders }] = await Promise.all([
+        supabase.from('projects').select('id', { count: 'exact', head: true }).eq('employer_id', id),
+        supabase.from('orders').select('seller_id').eq('buyer_id', id),
+      ]);
+      const ordersList = orders ?? [];
+      return [id, {
+        projectsCount: projectsCount ?? 0,
+        ordersCount: ordersList.length,
+        hiredCount: new Set(ordersList.map(o => o.seller_id)).size,
+      }] as const;
+    }));
+    setEmployerStats(prev => ({ ...prev, ...Object.fromEntries(entries) }));
+  }, [employerStats]);
 
   const loadProjects = useCallback(async () => {
     setLoading(true);
@@ -47,9 +85,12 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
     else if (sortBy === 'ending') query = query.order('deadline', { ascending: true, nullsFirst: false });
 
     const { data } = await query.limit(50);
-    if (data) setProjects(data as Project[]);
+    if (data) {
+      setProjects(data as Project[]);
+      loadEmployerStats(Array.from(new Set(data.map(p => p.employer_id))));
+    }
     setLoading(false);
-  }, [category, search, sortBy]);
+  }, [category, search, sortBy, loadEmployerStats]);
 
   const loadMyBids = useCallback(async () => {
     if (!profile) return;
@@ -113,8 +154,9 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
                   <Avatar src={employer?.avatar_url ?? undefined} name={employer?.display_name || employer?.email} size={36} />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">{employer?.display_name || employer?.full_name || t('board.employer')}</div>
-                    <div className="text-[11px] text-slate-400">{timeAgo(project.created_at)}</div>
+                    <EmployerStatsRow stats={employerStats[project.employer_id]} employer={employer} />
                   </div>
+                  <div className="text-[11px] text-slate-400 shrink-0 self-start">{timeAgo(project.created_at)}</div>
                 </button>
                 <div className="flex items-start justify-between mb-3">
                   <Badge color="blue">{(() => { const c = CATEGORIES.find(c => c.key === project.category); if (!c) return project.category; return language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label; })()}</Badge>
@@ -160,6 +202,7 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
       {selectedProject && (
         <ProjectDetailModal
           project={selectedProject}
+          employerStats={employerStats[selectedProject.employer_id]}
           onClose={() => setSelectedProject(null)}
           hasBid={myBids.has(selectedProject.id)}
           onBidPlaced={() => { loadMyBids(); loadProjects(); }}
@@ -183,8 +226,9 @@ export function BoardScreen({ onOpenChat }: { onOpenChat?: (userId: string) => v
   );
 }
 
-function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat, onViewProfile }: {
+function ProjectDetailModal({ project, employerStats, onClose, hasBid, onBidPlaced, onOpenChat, onViewProfile }: {
   project: Project;
+  employerStats: EmployerStats | undefined;
   onClose: () => void;
   hasBid: boolean;
   onBidPlaced: () => void;
@@ -330,7 +374,15 @@ function ProjectDetailModal({ project, onClose, hasBid, onBidPlaced, onOpenChat,
             <Avatar src={employer?.avatar_url ?? undefined} name={employer?.display_name || employer?.email} size={40} />
             <div className="min-w-0">
               <div className="font-semibold text-slate-900 dark:text-white">{employer?.display_name || employer?.full_name}</div>
-              <div className="text-xs text-slate-500">{timeAgo(project.created_at)}</div>
+              <div className="text-xs text-slate-400 mb-0.5">{timeAgo(project.created_at)}</div>
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                {employer && employer.review_count > 0 && (
+                  <span className="flex items-center gap-1"><Stars rating={employer.rating} size={11} />{employer.rating.toFixed(1)}</span>
+                )}
+                <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{employerStats?.projectsCount ?? 0} {t('board.employerStats.projectsPosted')}</span>
+                <span className="flex items-center gap-1"><Package className="w-3 h-3" />{employerStats?.ordersCount ?? 0} {t('board.employerStats.orders')}</span>
+                <span className="flex items-center gap-1"><UserCheck className="w-3 h-3" />{employerStats?.hiredCount ?? 0} {t('board.employerStats.hired')}</span>
+              </div>
             </div>
           </button>
           <Badge color="blue">{(() => { const c = CATEGORIES.find(c => c.key === project.category); if (!c) return ''; return language === 'en' ? c.labelEn : language === 'uz' ? c.labelUz : c.label; })()}</Badge>
