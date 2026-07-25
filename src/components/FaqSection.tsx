@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { t } from '../lib/i18n';
-import { ShoppingCart, Package, ShieldCheck, Gavel, Wallet, ChevronDown, Clock3 } from 'lucide-react';
+import { ShoppingCart, Package, ShieldCheck, Gavel, Wallet, Scale, ChevronDown, Clock3 } from 'lucide-react';
 
-type CategoryKey = 'orders' | 'gigs' | 'account' | 'tenders' | 'finance';
+type CategoryKey = 'orders' | 'gigs' | 'account' | 'tenders' | 'finance' | 'rights';
 
 const CATEGORIES: { key: CategoryKey; icon: React.ElementType }[] = [
   { key: 'orders', icon: ShoppingCart },
@@ -10,13 +10,14 @@ const CATEGORIES: { key: CategoryKey; icon: React.ElementType }[] = [
   { key: 'account', icon: ShieldCheck },
   { key: 'tenders', icon: Gavel },
   { key: 'finance', icon: Wallet },
+  { key: 'rights', icon: Scale },
 ];
 
 export function FaqSection() {
   const [category, setCategory] = useState<CategoryKey>('orders');
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
-  const items = [0, 1, 2].map(i => ({
+  const items = [0, 1, 2, 3, 4].map(i => ({
     q: t(`faq.${category}.q${i}`),
     a: t(`faq.${category}.a${i}`),
   })).filter(item => item.q && !item.q.startsWith('faq.'));
@@ -26,7 +27,7 @@ export function FaqSection() {
       <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white mb-1">{t('faq.title')}</h3>
       <p className="text-xs sm:text-sm text-slate-500 mb-4">{t('faq.subtitle')}</p>
 
-      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-4">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-4">
         {CATEGORIES.map(c => (
           <button
             key={c.key}
@@ -42,6 +43,10 @@ export function FaqSection() {
           </button>
         ))}
       </div>
+
+      {category === 'rights' && (
+        <p className="text-[11px] text-slate-400 mb-3 italic">{t('faq.rights.legalNote')}</p>
+      )}
 
       <div className="space-y-2">
         {items.map((item, i) => (
